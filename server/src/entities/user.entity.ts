@@ -30,10 +30,10 @@ export class User {
   role: string;
 
   // 연락처, 업체명은 선택 입력 가능
-  @Column({ length: 50, nullable: true })
+  @Column({ type: 'varchar', length: 50, nullable: true })
   phone?: string | null;
 
-  @Column({ length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: true })
   companyName?: string | null;
 
   // 계정 활성/잠금 상태

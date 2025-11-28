@@ -22,12 +22,12 @@ export class LoginHistory {
   @Column({ default: false })
   success: boolean;
 
-  @Column({ length: 50, nullable: true })
+  @Column({ type: 'varchar', length: 50, nullable: true })
   failReason?: string | null; // WRONG_PASSWORD, LOCKED, USER_NOT_FOUND 등
 
-  @Column({ length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: true })
   ip?: string | null;
 
-  @Column({ length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   userAgent?: string | null;
 }
