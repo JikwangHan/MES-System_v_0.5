@@ -47,7 +47,13 @@ export class UsersService {
   }
 
   async updateProfile(userId: number, payload: Partial<User>): Promise<User> {
-    await this.usersRepo.update(userId, payload);
+    // username, role, isActive, isLocked 등 민감 필드는 여기서 변경하지 않습니다.
+    const safePayload: Partial<User> = {
+      displayName: payload.displayName,
+      phone: payload.phone,
+      companyName: payload.companyName,
+    };
+    await this.usersRepo.update(userId, safePayload);
     const updated = await this.findById(userId);
     return updated!;
   }

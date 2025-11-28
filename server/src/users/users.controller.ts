@@ -1,25 +1,27 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Patch, UseGuards, Req } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { User } from '../entities/user.entity';
+import { JwtAuthGuard } from '../auth/jwt.guard';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
-// UsersController는 /users 경로로 들어오는 HTTP 요청을 처리합니다.
-// - GET /users : 모든 사용자 목록 조회
-// - POST /users : 새 사용자 생성 (name이 없으면 기본값 "테스트 사용자")
 @Controller('users')
+@UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  // GET /users 요청 처리: DB에 저장된 모든 사용자 목록을 반환합니다.
-  @Get()
-  async getUsers(): Promise<User[]> {
-    return this.usersService.findAll();
+  // 내 정보 조회
+  @Get('me')
+  async me(@Req() req: any) {
+    const user = await this.usersService.findById(req.user.userId);
+    if (!user) return null;
+    const { passwordHash, ...safe } = user;
+    return safe;
   }
 
-  // POST /users 요청 처리: name 값을 받아 새 사용자를 생성합니다.
-  // 요청 본문에 { "name": "원하는 이름" } 형태로 보내면 해당 이름으로 저장됩니다.
-  // name이 비어 있으면 기본값 "테스트 사용자"로 저장됩니다.
-  @Post()
-  async createUser(@Body('name') name?: string): Promise<User> {
-    return this.usersService.create(name);
+  // 내 정보 수정 (이름/연락처/업체명 등)
+  @Patch('me')
+  async updateProfile(@Req() req: any, @Body() dto: UpdateProfileDto) {
+    const updated = await this.usersService.updateProfile(req.user.userId, dto);
+    const { passwordHash, ...safe } = updated;
+    return safe;
   }
 }

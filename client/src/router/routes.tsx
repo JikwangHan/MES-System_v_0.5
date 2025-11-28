@@ -4,6 +4,7 @@ import LandingPage from '../pages/landing/LandingPage';
 import DashboardPage from '../pages/dashboard/DashboardPage';
 import OrderListPage from '../pages/orders/OrderListPage';
 import InventoryListPage from '../pages/inventory/InventoryListPage';
+import ProtectedRoute from './ProtectedRoute';
 
 // AppRouter는 전체 라우팅과 레이아웃 구성을 담당합니다.
 // - /, /login: 메인(랜딩) + 로그인 팝업 화면
@@ -17,12 +18,14 @@ const AppRouter = () => {
         <Route path="/login" element={<LandingPage />} />
 
         {/* 로그인 이후 공통 레이아웃 */}
-        <Route path="/app" element={<AppLayout />}>
-          <Route index element={<Navigate to="/app/dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="orders" element={<OrderListPage />} />
-          <Route path="inventory" element={<InventoryListPage />} />
-          {/* TODO: 품목/BOM/공정, 작업/품질, 설비/모니터링, 시스템관리 등 추가 */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/app" element={<AppLayout />}>
+            <Route index element={<Navigate to="/app/dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="orders" element={<OrderListPage />} />
+            <Route path="inventory" element={<InventoryListPage />} />
+            {/* TODO: 품목/BOM/공정, 작업/품질, 설비/모니터링, 시스템관리 등 추가 */}
+          </Route>
         </Route>
 
         {/* 404 Not Found */}
