@@ -46,7 +46,7 @@ const LandingPage = () => {
   const handleLogin = async (values: any) => {
     try {
       setLoginLoading(true);
-      const loggedIn = await login({ username: values.userId, password: values.password });
+      const loggedIn = await login({ companyCode: values.companyCode, username: values.userId, password: values.password });
       message.success('로그인되었습니다.');
       setOpenLogin(false);
       if (loggedIn?.mustChangePassword) {
@@ -68,6 +68,7 @@ const LandingPage = () => {
     try {
       setSignupLoading(true);
       await signup({
+        companyCode: values.companyCode,
         username: values.userId,
         displayName: values.displayName,
         password: values.password,
@@ -195,6 +196,9 @@ const LandingPage = () => {
               <Title level={2} style={{ marginBottom: 8 }}>Login</Title>
               <Paragraph style={{ marginBottom: 24, color: '#6b7280' }}>Sign in to your account</Paragraph>
               <Form layout="vertical" onFinish={handleLogin}>
+                <Form.Item label="회사코드" name="companyCode" rules={[{ required: true, message: '회사코드를 입력해 주세요.' }]}>
+                  <Input size="large" placeholder="회사코드" />
+                </Form.Item>
                 <Form.Item label="아이디" name="userId" rules={[{ required: true, message: '아이디를 입력해 주세요.' }]}>
                   <Input size="large" prefix={<UserOutlined />} placeholder="아이디" />
                 </Form.Item>
@@ -287,6 +291,9 @@ const LandingPage = () => {
               <Title level={2} style={{ marginBottom: 8 }}>Sign Up</Title>
               <Paragraph style={{ marginBottom: 24, color: '#6b7280' }}>필수 항목을 입력하면 가입이 완료됩니다.</Paragraph>
               <Form layout="vertical" onFinish={handleSignup}>
+                <Form.Item label="회사코드" name="companyCode" rules={[{ required: true, message: '회사코드를 입력해 주세요.' }]}>
+                  <Input size="large" placeholder="회사코드" />
+                </Form.Item>
                 <Form.Item
                   label="회원 구분"
                   name="role"

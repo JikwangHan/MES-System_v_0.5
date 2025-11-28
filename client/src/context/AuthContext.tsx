@@ -6,6 +6,7 @@ export type AuthUser = {
   username: string;
   displayName: string;
   role: string;
+  companyId?: number | null;
   phone?: string | null;
   companyName?: string | null;
   lastLoginAt?: string | null;
@@ -16,15 +17,16 @@ export type AuthUser = {
 type AuthContextState = {
   isAuthenticated: boolean;
   user: AuthUser | null;
-  login: (payload: { username: string; password: string }) => Promise<AuthUser | null>;
+  login: (payload: { companyCode: string; username: string; password: string }) => Promise<AuthUser | null>;
   logout: () => void;
   signup: (payload: {
+    companyCode: string;
     username: string;
     displayName: string;
     password: string;
     passwordConfirm: string;
-    role: string;
-    companyName: string;
+    role?: string;
+    companyName?: string;
     phone?: string;
   }) => Promise<void>;
   refreshMe: () => Promise<void>;
@@ -41,8 +43,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (token) refreshMe();
   }, []);
 
-  const login: AuthContextState['login'] = async ({ username, password }) => {
-    const { data } = await api.post('/auth/login', { username, password });
+  const login: AuthContextState['login'] = async ({ companyCode, username, password }) => {
+    const { data } = await api.post('/auth/login', { companyCode, username, password });
     localStorage.setItem('access_token', data.token);
     setUser(data.user);
     return data.user as AuthUser;

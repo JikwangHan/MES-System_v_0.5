@@ -4,7 +4,9 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  ManyToOne,
 } from 'typeorm';
+import { Company } from './company.entity';
 
 // User 엔티티: 로그인/권한/프로필/보안 관련 필드를 포함합니다.
 // 비밀번호는 bcrypt 해시로만 저장하며, 평문은 절대 저장하지 않습니다.
@@ -29,7 +31,11 @@ export class User {
   @Column({ length: 20, default: 'STAFF' })
   role: string;
 
-  // 연락처, 업체명은 선택 입력 가능
+  // 회사(테넌트) 연결
+  @ManyToOne(() => Company, (company) => company.users, { nullable: true, onDelete: 'SET NULL' })
+  company: Company | null;
+
+  // 연락처, 업체명은 선택 입력 가능 (업체명은 회사 엔티티와 중복되지만, 사용자 상세에 별도로 기록할 수 있게 유지)
   @Column({ type: 'varchar', length: 50, nullable: true })
   phone?: string | null;
 

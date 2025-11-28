@@ -6,8 +6,10 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { User } from './user.entity';
+import { Company } from './company.entity';
 
-// 로그인 시도 이력 테이블: 성공/실패, 잠금 원인 등을 기록합니다.
+// 로그인 시도 이력을 기록하는 테이블입니다.
+// 회사/사용자/성공여부/원인/IP/UA 등을 저장합니다.
 @Entity('user_login_history')
 export class LoginHistory {
   @PrimaryGeneratedColumn()
@@ -15,6 +17,12 @@ export class LoginHistory {
 
   @ManyToOne(() => User)
   user: User;
+
+  @ManyToOne(() => Company, (company) => company.loginHistories, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  company: Company | null;
 
   @CreateDateColumn({ type: 'datetime' })
   loginAt: Date;

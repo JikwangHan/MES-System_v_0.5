@@ -14,6 +14,7 @@ import { User } from '../entities/user.entity';
 import { LoginHistory } from '../entities/login-history.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { Company } from '../entities/company.entity';
 
 @Injectable()
 export class AuthService {
@@ -22,18 +23,22 @@ export class AuthService {
     private readonly jwtService: JwtService,
     @InjectRepository(LoginHistory)
     private readonly loginHistoryRepo: Repository<LoginHistory>,
+    @InjectRepository(Company)
+    private readonly companyRepo: Repository<Company>,
   ) {}
 
   async signup(dto: SignupDto): Promise<Omit<User, 'passwordHash'>> {
     if (dto.password !== dto.passwordConfirm) {
       throw new BadRequestException('비밀번호와 확인값이 일치하지 않습니다.');
     }
-    const exists = await this.usersService.findByUsername(dto.username);
+
+    const company = await this.usersService.ensureCompany(dto.companyCode, dto.companyName || dto.companyCode);
+    const exists = await this.usersService.findByUsernameAndCompany(dto.username, dto.companyCode);
     if (exists) throw new BadRequestException('이미 등록된 아이디입니다.');
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
-    const allowedRoles = ['ADMIN', 'OPERATOR', 'MERCHANT'];
-    const role = allowedRoles.includes(dto.role) ? dto.role : 'MERCHANT';
+    const allowedRoles = ['SYSTEM_ADMIN', 'COMPANY_ADMIN', 'USER'];
+    const role = allowedRoles.includes(dto.role) ? dto.role : 'USER';
     const user = await this.usersService.create({
       username: dto.username,
       displayName: dto.displayName,
@@ -41,6 +46,7 @@ export class AuthService {
       phone: dto.phone,
       companyName: dto.companyName,
       role,
+      company,
       isActive: true,
       isLocked: false,
       failedLoginCount: 0,
@@ -51,9 +57,9 @@ export class AuthService {
   }
 
   async login(dto: LoginDto, context?: { ip?: string; userAgent?: string }) {
-    const user = await this.usersService.findByUsername(dto.username);
+    const user = await this.usersService.findByUsernameAndCompany(dto.username, dto.companyCode);
     if (!user || !user.isActive) {
-      await this.saveLoginHistory(user, false, 'USER_NOT_FOUND', context);
+      await this.saveLoginHistory(null, false, 'USER_NOT_FOUND', context);
       throw new UnauthorizedException('아이디 또는 비밀번호를 다시 확인해 주세요.');
     }
     if (user.isLocked) {
@@ -70,7 +76,13 @@ export class AuthService {
     await this.usersService.resetFailedLoginAndUpdateLoginAt(user);
     await this.saveLoginHistory(user, true, null, context);
 
-    const payload = { sub: user.id, username: user.username, role: user.role, mustChangePassword: user.mustChangePassword };
+    const payload = {
+      sub: user.id,
+      username: user.username,
+      role: user.role,
+      companyId: user.company?.id || null,
+      mustChangePassword: user.mustChangePassword,
+    };
     const token = await this.jwtService.signAsync(payload);
     const { passwordHash, ...safeUser } = user;
     return { token, user: safeUser };
@@ -100,6 +112,7 @@ export class AuthService {
     if (!user) return;
     const history = this.loginHistoryRepo.create({
       user,
+      company: user.company ?? null,
       success,
       failReason: failReason || null,
       ip: context?.ip || null,

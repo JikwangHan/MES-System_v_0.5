@@ -7,12 +7,13 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { LoginHistory } from '../entities/login-history.entity';
+import { Company } from '../entities/company.entity';
 
 @Module({
   imports: [
     UsersModule,
     PassportModule,
-    TypeOrmModule.forFeature([LoginHistory]),
+    TypeOrmModule.forFeature([LoginHistory, Company]),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'dev_secret_key_change_later',
       signOptions: { expiresIn: '1h' },

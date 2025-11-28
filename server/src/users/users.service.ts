@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginHistory } from '../entities/login-history.entity';
+import { Company } from '../entities/company.entity';
 
 @Injectable()
 export class UsersService {
@@ -12,14 +13,25 @@ export class UsersService {
     private readonly usersRepo: Repository<User>,
     @InjectRepository(LoginHistory)
     private readonly historyRepo: Repository<LoginHistory>,
+    @InjectRepository(Company)
+    private readonly companyRepo: Repository<Company>,
   ) {}
 
   async findByUsername(username: string): Promise<User | null> {
-    return this.usersRepo.findOne({ where: { username } });
+    return this.usersRepo.findOne({ where: { username }, relations: ['company'] });
+  }
+
+  async findByUsernameAndCompany(username: string, companyCode: string): Promise<User | null> {
+    const company = await this.companyRepo.findOne({ where: { code: companyCode } });
+    if (!company) return null;
+    return this.usersRepo.findOne({
+      where: { username, company: { id: company.id } },
+      relations: ['company'],
+    });
   }
 
   async findById(id: number): Promise<User | null> {
-    return this.usersRepo.findOne({ where: { id } });
+    return this.usersRepo.findOne({ where: { id }, relations: ['company'] });
   }
 
   async create(dto: CreateUserDto): Promise<User> {
@@ -50,7 +62,7 @@ export class UsersService {
   }
 
   async updateProfile(userId: number, payload: Partial<User>): Promise<User> {
-    // username, role, isActive, isLocked 등 민감 필드는 여기서 변경하지 않습니다.
+    // username, role, isActive, isLocked 는 보호 필드로 여기서 변경하지 않습니다.
     const safePayload: Partial<User> = {
       displayName: payload.displayName,
       phone: payload.phone,
@@ -62,19 +74,31 @@ export class UsersService {
   }
 
   async ensureDefaultAdmin(): Promise<void> {
-    const admin = await this.findByUsername('admin');
+    // 기본 회사(SYSTEM) 생성
+    let systemCompany = await this.companyRepo.findOne({ where: { code: 'SYSTEM' } });
+    if (!systemCompany) {
+      systemCompany = this.companyRepo.create({ code: 'SYSTEM', name: '시스템' });
+      systemCompany = await this.companyRepo.save(systemCompany);
+    }
+
+    const admin = await this.usersRepo.findOne({
+      where: { username: 'admin', company: { id: systemCompany.id } },
+      relations: ['company'],
+    });
     if (admin) return;
+
     const bcrypt = await import('bcrypt');
     const hash = await bcrypt.hash('admin123', 10);
     const user = this.usersRepo.create({
       username: 'admin',
       displayName: '관리자',
       passwordHash: hash,
-      role: 'ADMIN',
+      role: 'SYSTEM_ADMIN',
       isActive: true,
       isLocked: false,
       failedLoginCount: 0,
       mustChangePassword: true,
+      company: systemCompany,
     });
     await this.usersRepo.save(user);
   }
@@ -84,6 +108,24 @@ export class UsersService {
       where: { user: { id: userId } },
       order: { loginAt: 'DESC' },
       take: limit,
+      relations: ['company'],
     });
+  }
+
+  async findCompanyByCode(companyCode: string): Promise<Company | null> {
+    return this.companyRepo.findOne({ where: { code: companyCode } });
+  }
+
+  async ensureCompany(companyCode: string, companyName?: string): Promise<Company> {
+    let company = await this.companyRepo.findOne({ where: { code: companyCode } });
+    if (!company) {
+      company = this.companyRepo.create({
+        code: companyCode,
+        name: companyName || companyCode,
+        status: 'ACTIVE',
+      });
+      company = await this.companyRepo.save(company);
+    }
+    return company;
   }
 }
