@@ -11,18 +11,20 @@ import {
   Row,
   Typography,
   message,
+  Select,
 } from 'antd';
 import { UserOutlined, LockOutlined, CloseOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../lib/api';
 
 const { Title, Paragraph, Text } = Typography;
+const { Option } = Select;
 
-// 메인 랜딩 + 로그인/회원가입/비밀번호 변경 모달 화면
-// - 상단: 로고, 메뉴(Dashboard/회원가입/Login or Logout)
+// 메인 랜딩 + 로그인/회원가입/비밀번호 변경 전용 화면
+// - 상단: 로고, 메뉴(Dashboard/회원가입/로그인 또는 로그아웃)
 // - 중앙: 시스템 소개
-// - 하단: 회사명/링크
-// - 모달: 로그인, 회원가입, 비밀번호 변경(firstLogin 등)
+// - 하단: 회사/링크
+// - 모달: 로그인, 회원가입(회원구분+업체명 필수), 비밀번호 변경(firstLogin 등)
 const LandingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,11 +46,10 @@ const LandingPage = () => {
   const handleLogin = async (values: any) => {
     try {
       setLoginLoading(true);
-      await login({ username: values.userId, password: values.password });
+      const loggedIn = await login({ username: values.userId, password: values.password });
       message.success('로그인되었습니다.');
       setOpenLogin(false);
-      // admin 계정이나 mustChangePassword가 필요한 경우 비밀번호 변경 모달 유도
-      if (values.userId === 'admin' || user?.mustChangePassword) {
+      if (loggedIn?.mustChangePassword) {
         setOpenPwChange(true);
       }
       navigate('/app/dashboard');
@@ -61,7 +62,7 @@ const LandingPage = () => {
 
   const handleSignup = async (values: any) => {
     if (values.password !== values.passwordConfirm) {
-      message.error('비밀번호와 확인이 일치하지 않습니다.');
+      message.error('비밀번호와 확인값이 일치하지 않습니다.');
       return;
     }
     try {
@@ -71,10 +72,11 @@ const LandingPage = () => {
         displayName: values.displayName,
         password: values.password,
         passwordConfirm: values.passwordConfirm,
-        phone: values.phone,
+        role: values.role,
         companyName: values.companyName,
+        phone: values.phone,
       });
-      message.success('회원가입이 완료되었습니다. 로그인하세요.');
+      message.success('회원가입이 완료되었습니다. 로그인해 주세요.');
       setOpenSignup(false);
       setOpenLogin(true);
     } catch (err: any) {
@@ -86,7 +88,7 @@ const LandingPage = () => {
 
   const handleChangePassword = async (values: any) => {
     if (values.newPassword !== values.newPasswordConfirm) {
-      message.error('새 비밀번호와 확인이 일치하지 않습니다.');
+      message.error('새 비밀번호와 확인값이 일치하지 않습니다.');
       return;
     }
     try {
@@ -130,7 +132,7 @@ const LandingPage = () => {
         overflow: 'hidden',
       }}
     >
-      {/* 상단 바: 로고/메뉴 */}
+      {/* 상단 영역: 로고/메뉴 */}
       <div
         style={{
           display: 'flex',
@@ -156,7 +158,7 @@ const LandingPage = () => {
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ color: '#e9f4ff', fontWeight: 600 }}>
-                {user?.displayName || user?.username}님 로그인 되었습니다.
+                {user?.displayName || user?.username}님 로그인되었습니다.
               </span>
               <Button onClick={logout}>Logout</Button>
             </div>
@@ -164,12 +166,12 @@ const LandingPage = () => {
         </div>
       </div>
 
-      {/* 중앙 소개 텍스트 */}
+      {/* 중앙 시스템 소개 텍스트 */}
       <div style={{ textAlign: 'center', marginTop: 60, padding: '0 16px' }}>
         <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: 1 }}>MES</div>
         <div style={{ fontSize: 20, fontWeight: 600, marginTop: 8 }}>Manufacturing Execution Systems</div>
         <div style={{ fontSize: 14, marginTop: 10, maxWidth: 520, marginInline: 'auto' }}>
-          MES는 제조 프로세스의 품질과 효율성을 개선하는 체계적인 소프트웨어 솔루션입니다.
+          MES는 제조 프로세스의 품질과 효율성을 개선하는 체계적인 제조 실행 소프트웨어 솔루션입니다.
         </div>
       </div>
 
@@ -193,10 +195,10 @@ const LandingPage = () => {
               <Title level={2} style={{ marginBottom: 8 }}>Login</Title>
               <Paragraph style={{ marginBottom: 24, color: '#6b7280' }}>Sign in to your account</Paragraph>
               <Form layout="vertical" onFinish={handleLogin}>
-                <Form.Item label="아이디" name="userId" rules={[{ required: true, message: '아이디를 입력하세요.' }]}>
+                <Form.Item label="아이디" name="userId" rules={[{ required: true, message: '아이디를 입력해 주세요.' }]}>
                   <Input size="large" prefix={<UserOutlined />} placeholder="아이디" />
                 </Form.Item>
-                <Form.Item label="비밀번호" name="password" rules={[{ required: true, message: '비밀번호를 입력하세요.' }]}>
+                <Form.Item label="비밀번호" name="password" rules={[{ required: true, message: '비밀번호를 입력해 주세요.' }]}>
                   <Input.Password size="large" prefix={<LockOutlined />} placeholder="비밀번호" />
                 </Form.Item>
                 <Form.Item style={{ marginBottom: 16 }}>
@@ -283,29 +285,40 @@ const LandingPage = () => {
           <Row gutter={0}>
             <Col xs={24} md={12} style={{ padding: 32, background: '#fff' }}>
               <Title level={2} style={{ marginBottom: 8 }}>Sign Up</Title>
-              <Paragraph style={{ marginBottom: 24, color: '#6b7280' }}>필수 정보만 입력하면 됩니다.</Paragraph>
+              <Paragraph style={{ marginBottom: 24, color: '#6b7280' }}>필수 항목을 입력하면 가입이 완료됩니다.</Paragraph>
               <Form layout="vertical" onFinish={handleSignup}>
-                <Form.Item label="아이디" name="userId" rules={[{ required: true, message: '아이디를 입력하세요.' }]}>
+                <Form.Item
+                  label="회원 구분"
+                  name="role"
+                  rules={[{ required: true, message: '회원 구분을 선택해 주세요.' }]}
+                >
+                  <Select size="large" placeholder="회원 구분을 선택해 주세요">
+                    <Option value="ADMIN">관리자</Option>
+                    <Option value="OPERATOR">운영자</Option>
+                    <Option value="MERCHANT">소상공인</Option>
+                  </Select>
+                </Form.Item>
+                <Form.Item label="업체명" name="companyName" rules={[{ required: true, message: '업체명을 입력해 주세요.' }]}>
+                  <Input size="large" placeholder="업체명" />
+                </Form.Item>
+                <Form.Item label="아이디" name="userId" rules={[{ required: true, message: '아이디를 입력해 주세요.' }]}>
                   <Input size="large" prefix={<UserOutlined />} placeholder="아이디" />
                 </Form.Item>
-                <Form.Item label="이름" name="displayName" rules={[{ required: true, message: '이름을 입력하세요.' }]}>
+                <Form.Item label="이름" name="displayName" rules={[{ required: true, message: '이름을 입력해 주세요.' }]}>
                   <Input size="large" placeholder="이름" />
                 </Form.Item>
-                <Form.Item label="비밀번호" name="password" rules={[{ required: true, message: '비밀번호를 입력하세요.' }]}>
+                <Form.Item label="비밀번호" name="password" rules={[{ required: true, message: '비밀번호를 입력해 주세요.' }, { min: 8, message: '8자 이상 입력해 주세요.' }]}>
                   <Input.Password size="large" prefix={<LockOutlined />} placeholder="비밀번호(8자 이상)" />
                 </Form.Item>
                 <Form.Item
                   label="비밀번호 확인"
                   name="passwordConfirm"
-                  rules={[{ required: true, message: '비밀번호 확인을 입력하세요.' }]}
+                  rules={[{ required: true, message: '비밀번호 확인을 입력해 주세요.' }]}
                 >
                   <Input.Password size="large" prefix={<LockOutlined />} placeholder="비밀번호 확인" />
                 </Form.Item>
                 <Form.Item label="연락처" name="phone">
                   <Input size="large" placeholder="연락처(선택)" />
-                </Form.Item>
-                <Form.Item label="업체명" name="companyName">
-                  <Input size="large" placeholder="업체명(선택)" />
                 </Form.Item>
                 <Form.Item style={{ marginBottom: 16 }}>
                   <Button type="primary" htmlType="submit" block size="large" style={{ height: 44 }} loading={signupLoading}>
@@ -359,8 +372,8 @@ const LandingPage = () => {
                   Sign Up
                 </Title>
                 <Text style={{ color: '#e6f7ff', fontSize: 14, lineHeight: 1.7, wordBreak: 'keep-all' }}>
-                  <div>소상공인 대표/직원용 간단 회원가입입니다.</div>
-                  <div>아이디, 이름, 비밀번호만 입력하면 바로 등록됩니다.</div>
+                  <div>소상공인 대표/직원도 바로 가입할 수 있습니다.</div>
+                  <div>회원 구분, 업체명, 아이디, 이름, 비밀번호를 입력하면 즉시 완료됩니다.</div>
                 </Text>
               </div>
             </Col>
@@ -368,7 +381,7 @@ const LandingPage = () => {
         </Card>
       </Modal>
 
-      {/* 비밀번호 변경 모달 (firstLogin, admin 등 강제 유도 시) */}
+      {/* 비밀번호 변경 모달 (firstLogin, admin 기본 계정 변경 유도) */}
       <Modal
         open={openPwChange}
         onCancel={closePwChangeModal}
@@ -380,20 +393,20 @@ const LandingPage = () => {
         title="비밀번호 변경"
       >
         <Form layout="vertical" form={pwForm} onFinish={handleChangePassword}>
-          <Form.Item label="현재 비밀번호" name="currentPassword" rules={[{ required: true, message: '현재 비밀번호를 입력하세요.' }]}>
+          <Form.Item label="현재 비밀번호" name="currentPassword" rules={[{ required: true, message: '현재 비밀번호를 입력해 주세요.' }]}>
             <Input.Password placeholder="현재 비밀번호" />
           </Form.Item>
           <Form.Item
             label="새 비밀번호"
             name="newPassword"
-            rules={[{ required: true, message: '새 비밀번호를 입력하세요.' }, { min: 8, message: '8자 이상 입력하세요.' }]}
+            rules={[{ required: true, message: '새 비밀번호를 입력해 주세요.' }, { min: 8, message: '8자 이상 입력해 주세요.' }]}
           >
             <Input.Password placeholder="새 비밀번호(8자 이상)" />
           </Form.Item>
           <Form.Item
             label="새 비밀번호 확인"
             name="newPasswordConfirm"
-            rules={[{ required: true, message: '새 비밀번호 확인을 입력하세요.' }]}
+            rules={[{ required: true, message: '새 비밀번호 확인을 입력해 주세요.' }]}
           >
             <Input.Password placeholder="새 비밀번호 확인" />
           </Form.Item>
@@ -419,7 +432,7 @@ const LandingPage = () => {
           fontSize: 13,
         }}
       >
-        <span>© 2025 위드위 (추후 로고 교체 가능)</span>
+        <span>© 2025 위드위 (회사 로고/정보 교체 예정)</span>
         <span style={{ display: 'flex', gap: 16 }}>
           <a style={{ color: '#d7e9ff' }}>About Us</a>
           <a style={{ color: '#d7e9ff' }}>MES License</a>

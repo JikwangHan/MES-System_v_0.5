@@ -26,19 +26,21 @@ export class AuthService {
 
   async signup(dto: SignupDto): Promise<Omit<User, 'passwordHash'>> {
     if (dto.password !== dto.passwordConfirm) {
-      throw new BadRequestException('비밀번호와 확인이 일치하지 않습니다.');
+      throw new BadRequestException('비밀번호와 확인값이 일치하지 않습니다.');
     }
     const exists = await this.usersService.findByUsername(dto.username);
-    if (exists) throw new BadRequestException('이미 사용 중인 아이디입니다.');
+    if (exists) throw new BadRequestException('이미 등록된 아이디입니다.');
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
+    const allowedRoles = ['ADMIN', 'OPERATOR', 'MERCHANT'];
+    const role = allowedRoles.includes(dto.role) ? dto.role : 'MERCHANT';
     const user = await this.usersService.create({
       username: dto.username,
       displayName: dto.displayName,
       passwordHash,
       phone: dto.phone,
       companyName: dto.companyName,
-      role: 'STAFF',
+      role,
       isActive: true,
       isLocked: false,
       failedLoginCount: 0,
@@ -68,7 +70,7 @@ export class AuthService {
     await this.usersService.resetFailedLoginAndUpdateLoginAt(user);
     await this.saveLoginHistory(user, true, null, context);
 
-    const payload = { sub: user.id, username: user.username, role: user.role };
+    const payload = { sub: user.id, username: user.username, role: user.role, mustChangePassword: user.mustChangePassword };
     const token = await this.jwtService.signAsync(payload);
     const { passwordHash, ...safeUser } = user;
     return { token, user: safeUser };
@@ -76,10 +78,10 @@ export class AuthService {
 
   async changePassword(userId: number, dto: ChangePasswordDto) {
     if (dto.newPassword !== dto.newPasswordConfirm) {
-      throw new BadRequestException('새 비밀번호와 확인이 일치하지 않습니다.');
+      throw new BadRequestException('새 비밀번호와 확인값이 일치하지 않습니다.');
     }
     const user = await this.usersService.findById(userId);
-    if (!user) throw new UnauthorizedException('사용자 정보를 찾을 수 없습니다.');
+    if (!user) throw new UnauthorizedException('사용자를 찾을 수 없습니다.');
 
     const ok = await bcrypt.compare(dto.currentPassword, user.passwordHash);
     if (!ok) throw new UnauthorizedException('현재 비밀번호가 일치하지 않습니다.');

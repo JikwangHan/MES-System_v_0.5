@@ -1,13 +1,13 @@
-import { IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
 // 회원가입 요청 DTO
 export class SignupDto {
   @IsString()
-  @IsNotEmpty({ message: '아이디를 입력하세요.' })
+  @IsNotEmpty({ message: '아이디를 입력해 주세요.' })
   username: string;
 
   @IsString()
-  @IsNotEmpty({ message: '이름을 입력하세요.' })
+  @IsNotEmpty({ message: '이름을 입력해 주세요.' })
   displayName: string;
 
   @IsString()
@@ -15,14 +15,19 @@ export class SignupDto {
   password: string;
 
   @IsString()
-  @IsNotEmpty({ message: '비밀번호 확인을 입력하세요.' })
+  @IsNotEmpty({ message: '비밀번호 확인을 입력해 주세요.' })
   passwordConfirm: string;
+
+  // 회원 구분: 관리자/운영자/소상공인
+  @IsString()
+  @IsIn(['ADMIN', 'OPERATOR', 'MERCHANT'], { message: '회원구분은 ADMIN/OPERATOR/MERCHANT 중 하나여야 합니다.' })
+  role: string;
+
+  @IsString()
+  @IsNotEmpty({ message: '업체명을 입력해 주세요.' })
+  companyName: string;
 
   @IsOptional()
   @IsString()
   phone?: string;
-
-  @IsOptional()
-  @IsString()
-  companyName?: string;
 }

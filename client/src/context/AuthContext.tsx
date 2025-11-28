@@ -16,15 +16,16 @@ export type AuthUser = {
 type AuthContextState = {
   isAuthenticated: boolean;
   user: AuthUser | null;
-  login: (payload: { username: string; password: string }) => Promise<void>;
+  login: (payload: { username: string; password: string }) => Promise<AuthUser | null>;
   logout: () => void;
   signup: (payload: {
     username: string;
     displayName: string;
     password: string;
     passwordConfirm: string;
+    role: string;
+    companyName: string;
     phone?: string;
-    companyName?: string;
   }) => Promise<void>;
   refreshMe: () => Promise<void>;
   updateUser: (partial: Partial<AuthUser>) => void;
@@ -44,6 +45,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data } = await api.post('/auth/login', { username, password });
     localStorage.setItem('access_token', data.token);
     setUser(data.user);
+    return data.user as AuthUser;
   };
 
   const logout = () => {
