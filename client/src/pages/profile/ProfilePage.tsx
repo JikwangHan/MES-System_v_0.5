@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Card, Form, Input, Button, message, Row, Col } from 'antd';
+import { Card, Form, Input, Button, message, Row, Col, Table, Alert } from 'antd';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 
-// 내 정보 조회/수정 + 비밀번호 변경 화면
+// 내 정보 조회/수정 + 비밀번호 변경 + 로그인 이력 표시 화면
 const ProfilePage = () => {
   const { user, updateUser } = useAuth();
   const [profileForm] = Form.useForm();
   const [pwForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [pwLoading, setPwLoading] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
 
   const fetchMe = async () => {
     try {
@@ -28,8 +29,18 @@ const ProfilePage = () => {
     }
   };
 
+  const fetchHistory = async () => {
+    try {
+      const { data } = await api.get('/users/me/history?limit=10');
+      setHistory(data);
+    } catch (err: any) {
+      message.error(err.response?.data?.message || '로그인 이력을 불러오지 못했습니다.');
+    }
+  };
+
   useEffect(() => {
     fetchMe();
+    fetchHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -63,6 +74,13 @@ const ProfilePage = () => {
     }
   };
 
+  const historyColumns = [
+    { title: '시간', dataIndex: 'loginAt', key: 'loginAt' },
+    { title: '성공', dataIndex: 'success', key: 'success', render: (v: boolean) => (v ? '성공' : '실패') },
+    { title: '사유', dataIndex: 'failReason', key: 'failReason', render: (v: string) => v || '-' },
+    { title: 'IP', dataIndex: 'ip', key: 'ip', render: (v: string) => v || '-' },
+  ];
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <Card title="내 정보" loading={loading}>
@@ -79,7 +97,7 @@ const ProfilePage = () => {
               </Form.Item>
             </Col>
             <Col xs={24} md={12}>
-              <Form.Item label="이름" name="displayName" rules={[{ required: true, message: '이름을 입력하세요.' }]}> 
+              <Form.Item label="이름" name="displayName" rules={[{ required: true, message: '이름을 입력하세요.' }]}>
                 <Input placeholder="이름" />
               </Form.Item>
             </Col>
@@ -144,6 +162,18 @@ const ProfilePage = () => {
       <Card title="보안 정보">
         <div>마지막 로그인: {user?.lastLoginAt || '-'} </div>
         <div>비밀번호 변경일: {user?.lastPasswordChangedAt || '-'}</div>
+        {user?.mustChangePassword && (
+          <Alert
+            style={{ marginTop: 12 }}
+            type="warning"
+            message="보안을 위해 비밀번호를 변경해 주세요."
+            showIcon
+          />
+        )}
+      </Card>
+
+      <Card title="로그인 이력 (최근 10건)">
+        <Table rowKey="id" dataSource={history} columns={historyColumns} pagination={false} size="small" />
       </Card>
     </div>
   );

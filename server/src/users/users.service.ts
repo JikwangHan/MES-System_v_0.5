@@ -3,12 +3,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+import { LoginHistory } from '../entities/login-history.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepo: Repository<User>,
+    @InjectRepository(LoginHistory)
+    private readonly historyRepo: Repository<LoginHistory>,
   ) {}
 
   async findByUsername(username: string): Promise<User | null> {
@@ -74,5 +77,13 @@ export class UsersService {
       mustChangePassword: true,
     });
     await this.usersRepo.save(user);
+  }
+
+  async getLoginHistory(userId: number, limit = 10): Promise<LoginHistory[]> {
+    return this.historyRepo.find({
+      where: { user: { id: userId } },
+      order: { loginAt: 'DESC' },
+      take: limit,
+    });
   }
 }
