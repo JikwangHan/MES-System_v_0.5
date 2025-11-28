@@ -1,10 +1,10 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-// 로그인 요청 DTO (회사코드 + 아이디 + 비밀번호)
+// 로그인 요청 DTO (회사코드는 선택 입력, 없으면 기본 회사 코드로 처리)
 export class LoginDto {
   @IsString()
-  @IsNotEmpty({ message: '회사코드를 입력해 주세요.' })
-  companyCode: string;
+  @IsOptional()
+  companyCode?: string;
 
   @IsString()
   @IsNotEmpty({ message: '아이디를 입력해 주세요.' })

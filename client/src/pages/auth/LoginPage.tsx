@@ -38,7 +38,7 @@ const LoginPage = () => {
           pointerEvents: 'none',
         }}
       >
-        <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: 1 }}>MES</div>
+        <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: 1 }}>MMS</div>
         <div style={{ fontSize: 18, fontWeight: 600, marginTop: 4 }}>Manufacturing Execution Systems</div>
         <div style={{ fontSize: 14, marginTop: 8 }}>생산 프로세스의 품질과 효율성을 개선하는 체계적인 솔루션입니다.</div>
       </div>
@@ -126,7 +126,7 @@ const LoginPage = () => {
           fontSize: 13,
         }}
       >
-        <span>© 2025 MES System</span>
+        <span>© 2025 MMS</span>
         <span>About Us</span>
         <span>MIT License</span>
       </div>

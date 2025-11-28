@@ -3,8 +3,8 @@ import { IsIn, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validat
 // 회원가입 요청 DTO
 export class SignupDto {
   @IsString()
-  @IsNotEmpty({ message: '회사코드를 입력해 주세요.' })
-  companyCode: string;
+  @IsOptional()
+  companyCode?: string;
 
   @IsString()
   @IsNotEmpty({ message: '아이디를 입력해 주세요.' })

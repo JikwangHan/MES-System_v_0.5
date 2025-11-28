@@ -32,8 +32,9 @@ export class AuthService {
       throw new BadRequestException('비밀번호와 확인값이 일치하지 않습니다.');
     }
 
-    const company = await this.usersService.ensureCompany(dto.companyCode, dto.companyName || dto.companyCode);
-    const exists = await this.usersService.findByUsernameAndCompany(dto.username, dto.companyCode);
+    const companyCode = dto.companyCode || process.env.DEFAULT_COMPANY_CODE || 'DEFAULT';
+    const company = await this.usersService.ensureCompany(companyCode, dto.companyName || companyCode);
+    const exists = await this.usersService.findByUsernameAndCompany(dto.username, companyCode);
     if (exists) throw new BadRequestException('이미 등록된 아이디입니다.');
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
@@ -57,7 +58,8 @@ export class AuthService {
   }
 
   async login(dto: LoginDto, context?: { ip?: string; userAgent?: string }) {
-    const user = await this.usersService.findByUsernameAndCompany(dto.username, dto.companyCode);
+    const companyCode = dto.companyCode || process.env.DEFAULT_COMPANY_CODE || 'DEFAULT';
+    const user = await this.usersService.findByUsernameAndCompany(dto.username, companyCode);
     if (!user || !user.isActive) {
       await this.saveLoginHistory(null, false, 'USER_NOT_FOUND', context);
       throw new UnauthorizedException('아이디 또는 비밀번호를 다시 확인해 주세요.');

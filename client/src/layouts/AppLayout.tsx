@@ -57,7 +57,7 @@ const AppLayout = () => {
   return (
     <Layout style={{ minHeight: '100vh', background: '#f5f5f5' }}>
       <Sider width={220} theme="light" style={{ borderRight: '1px solid #e5e5e5' }}>
-        <div style={{ padding: 16, fontWeight: 700 }}>MES System v0.5</div>
+        <div style={{ padding: 16, fontWeight: 700 }}>MMS v0.5</div>
         <Menu
           mode="inline"
           selectedKeys={[selectedKey]}
@@ -80,7 +80,7 @@ const AppLayout = () => {
             borderBottom: '1px solid #e5e5e5',
           }}
         >
-          <div style={{ fontWeight: 600 }}>스마트 팩토리 MES 웹서버</div>
+          <div style={{ fontWeight: 600 }}>스마트 팩토리 MMS 웹서버</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ color: '#4b5563' }}>
               {user?.displayName || user?.username}님 로그인 되었습니다.

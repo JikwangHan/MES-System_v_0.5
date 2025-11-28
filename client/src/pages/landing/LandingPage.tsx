@@ -20,11 +20,7 @@ import { api } from '../../lib/api';
 const { Title, Paragraph, Text } = Typography;
 const { Option } = Select;
 
-// 메인 랜딩 + 로그인/회원가입/비밀번호 변경 전용 화면
-// - 상단: 로고, 메뉴(Dashboard/회원가입/로그인 또는 로그아웃)
-// - 중앙: 시스템 소개
-// - 하단: 회사/링크
-// - 모달: 로그인, 회원가입(회원구분+업체명 필수), 비밀번호 변경(firstLogin 등)
+// 메인 랜딩 + 로그인/회원가입/비밀번호 변경 모달 화면 (MMS 브랜드)
 const LandingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -43,10 +39,11 @@ const LandingPage = () => {
     setOpenLogin(initialOpen);
   }, [initialOpen]);
 
+  // 로그인 처리 (회사코드 입력 없이 기본 회사 코드 사용)
   const handleLogin = async (values: any) => {
     try {
       setLoginLoading(true);
-      const loggedIn = await login({ companyCode: values.companyCode, username: values.userId, password: values.password });
+      const loggedIn = await login({ username: values.userId, password: values.password });
       message.success('로그인되었습니다.');
       setOpenLogin(false);
       if (loggedIn?.mustChangePassword) {
@@ -60,6 +57,7 @@ const LandingPage = () => {
     }
   };
 
+  // 회원가입 처리 (회사코드 필드 제거, 관리자 페이지에서 회사 관리 예정)
   const handleSignup = async (values: any) => {
     if (values.password !== values.passwordConfirm) {
       message.error('비밀번호와 확인값이 일치하지 않습니다.');
@@ -68,7 +66,6 @@ const LandingPage = () => {
     try {
       setSignupLoading(true);
       await signup({
-        companyCode: values.companyCode,
         username: values.userId,
         displayName: values.displayName,
         password: values.password,
@@ -87,6 +84,7 @@ const LandingPage = () => {
     }
   };
 
+  // 비밀번호 변경 처리
   const handleChangePassword = async (values: any) => {
     if (values.newPassword !== values.newPasswordConfirm) {
       message.error('새 비밀번호와 확인값이 일치하지 않습니다.');
@@ -142,7 +140,7 @@ const LandingPage = () => {
           padding: '20px 32px',
         }}
       >
-        <div style={{ fontSize: 18, fontWeight: 700 }}>MES</div>
+        <div style={{ fontSize: 18, fontWeight: 700 }}>MMS</div>
         <div style={{ display: 'flex', gap: 12 }}>
           <Button type="link" style={{ color: '#e9f4ff' }} onClick={() => navigate('/app/dashboard')}>
             Dashboard
@@ -169,10 +167,10 @@ const LandingPage = () => {
 
       {/* 중앙 시스템 소개 텍스트 */}
       <div style={{ textAlign: 'center', marginTop: 60, padding: '0 16px' }}>
-        <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: 1 }}>MES</div>
-        <div style={{ fontSize: 20, fontWeight: 600, marginTop: 8 }}>Manufacturing Execution Systems</div>
+        <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: 1 }}>MMS</div>
+        <div style={{ fontSize: 20, fontWeight: 600, marginTop: 8 }}>Manufacturing Management System</div>
         <div style={{ fontSize: 14, marginTop: 10, maxWidth: 520, marginInline: 'auto' }}>
-          MES는 제조 프로세스의 품질과 효율성을 개선하는 체계적인 제조 실행 소프트웨어 솔루션입니다.
+          MMS는 제조 프로세스의 품질과 효율성을 개선하는 체계적인 제조 관리 소프트웨어 솔루션입니다.
         </div>
       </div>
 
@@ -196,9 +194,6 @@ const LandingPage = () => {
               <Title level={2} style={{ marginBottom: 8 }}>Login</Title>
               <Paragraph style={{ marginBottom: 24, color: '#6b7280' }}>Sign in to your account</Paragraph>
               <Form layout="vertical" onFinish={handleLogin}>
-                <Form.Item label="회사코드" name="companyCode" rules={[{ required: true, message: '회사코드를 입력해 주세요.' }]}>
-                  <Input size="large" placeholder="회사코드" />
-                </Form.Item>
                 <Form.Item label="아이디" name="userId" rules={[{ required: true, message: '아이디를 입력해 주세요.' }]}>
                   <Input size="large" prefix={<UserOutlined />} placeholder="아이디" />
                 </Form.Item>
@@ -291,18 +286,14 @@ const LandingPage = () => {
               <Title level={2} style={{ marginBottom: 8 }}>Sign Up</Title>
               <Paragraph style={{ marginBottom: 24, color: '#6b7280' }}>필수 항목을 입력하면 가입이 완료됩니다.</Paragraph>
               <Form layout="vertical" onFinish={handleSignup}>
-                <Form.Item label="회사코드" name="companyCode" rules={[{ required: true, message: '회사코드를 입력해 주세요.' }]}>
-                  <Input size="large" placeholder="회사코드" />
-                </Form.Item>
                 <Form.Item
                   label="회원 구분"
                   name="role"
                   rules={[{ required: true, message: '회원 구분을 선택해 주세요.' }]}
                 >
                   <Select size="large" placeholder="회원 구분을 선택해 주세요">
-                    <Option value="ADMIN">관리자</Option>
-                    <Option value="OPERATOR">운영자</Option>
-                    <Option value="MERCHANT">소상공인</Option>
+                    <Option value="COMPANY_ADMIN">운영자</Option>
+                    <Option value="USER">소상공인/직원</Option>
                   </Select>
                 </Form.Item>
                 <Form.Item label="업체명" name="companyName" rules={[{ required: true, message: '업체명을 입력해 주세요.' }]}>
@@ -433,17 +424,17 @@ const LandingPage = () => {
           left: 24,
           right: 24,
           display: 'flex',
-          justifyContent: 'space-between',
+          justifyContent: 'between',
           alignItems: 'center',
           color: '#d7e9ff',
           fontSize: 13,
         }}
       >
-        <span>© 2025 위드위 (회사 로고/정보 교체 예정)</span>
+        <span>© 2025 MMS (회사 로고/정보 교체 예정)</span>
         <span style={{ display: 'flex', gap: 16 }}>
           <a style={{ color: '#d7e9ff' }}>About Us</a>
-          <a style={{ color: '#d7e9ff' }}>MES License</a>
-          <a style={{ color: '#d7e9ff' }}>EMS V0.5</a>
+          <a style={{ color: '#d7e9ff' }}>MMS License</a>
+          <a style={{ color: '#d7e9ff' }}>MMS V0.5</a>
         </span>
       </div>
     </div>
