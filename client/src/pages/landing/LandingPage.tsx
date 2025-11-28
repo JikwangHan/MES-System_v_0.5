@@ -292,6 +292,7 @@ const LandingPage = () => {
                   rules={[{ required: true, message: '회원 구분을 선택해 주세요.' }]}
                 >
                   <Select size="large" placeholder="회원 구분을 선택해 주세요">
+                    <Option value="ADMIN">관리자</Option>
                     <Option value="COMPANY_ADMIN">운영자</Option>
                     <Option value="USER">소상공인/직원</Option>
                   </Select>

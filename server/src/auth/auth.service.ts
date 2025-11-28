@@ -38,15 +38,21 @@ export class AuthService {
     if (exists) throw new BadRequestException('이미 등록된 아이디입니다.');
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
-    const allowedRoles = ['SYSTEM_ADMIN', 'COMPANY_ADMIN', 'USER'];
-    const role = allowedRoles.includes(dto.role) ? dto.role : 'USER';
+    const allowedRoles = ['SYSTEM_ADMIN', 'COMPANY_ADMIN', 'ADMIN', 'USER'];
+    // ADMIN은 COMPANY_ADMIN으로 매핑해서 처리
+    const normalizedRole =
+      dto.role === 'ADMIN'
+        ? 'COMPANY_ADMIN'
+        : allowedRoles.includes(dto.role)
+          ? dto.role
+          : 'USER';
     const user = await this.usersService.create({
       username: dto.username,
       displayName: dto.displayName,
       passwordHash,
       phone: dto.phone,
       companyName: dto.companyName,
-      role,
+      role: normalizedRole,
       company,
       isActive: true,
       isLocked: false,

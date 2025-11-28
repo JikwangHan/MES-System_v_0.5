@@ -22,9 +22,9 @@ export class SignupDto {
   @IsNotEmpty({ message: '비밀번호 확인을 입력해 주세요.' })
   passwordConfirm: string;
 
-  // 회원 구분: 관리자/운영자/소상공인
+  // 회원 구분: 시스템관리자/관리자(운영자)/소상공인
   @IsString()
-  @IsIn(['ADMIN', 'OPERATOR', 'MERCHANT'], { message: '회원구분은 ADMIN/OPERATOR/MERCHANT 중 하나여야 합니다.' })
+  @IsIn(['SYSTEM_ADMIN', 'ADMIN', 'COMPANY_ADMIN', 'USER'], { message: '회원구분은 SYSTEM_ADMIN/ADMIN/COMPANY_ADMIN/USER 중 하나여야 합니다.' })
   role: string;
 
   @IsString()
