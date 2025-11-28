@@ -1,4 +1,5 @@
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Button,
   Card,
@@ -12,16 +13,16 @@ import {
   message,
 } from 'antd';
 import { UserOutlined, LockOutlined, CloseOutlined } from '@ant-design/icons';
-import { useMemo, useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { api } from '../../lib/api';
 
 const { Title, Paragraph, Text } = Typography;
 
-// 메인 랜딩 + 로그인/회원가입 팝업 화면
-// - 전체 배경에 그라데이션과 시스템 소개를 배치
-// - 상단 좌측 로고, 우측 메뉴(Dashboard/회원가입/Login or Logout)
-// - 하단 좌측 회사명, 우측 링크(About Us, MES License, EMS V0.5)
-// - 로그인/회원가입 버튼 클릭 시 모달 오픈
+// 메인 랜딩 + 로그인/회원가입/비밀번호 변경 모달 화면
+// - 상단: 로고, 메뉴(Dashboard/회원가입/Login or Logout)
+// - 중앙: 시스템 소개
+// - 하단: 회사명/링크
+// - 모달: 로그인, 회원가입, 비밀번호 변경(firstLogin 등)
 const LandingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,8 +31,11 @@ const LandingPage = () => {
   const initialOpen = useMemo(() => location.pathname === '/login', [location.pathname]);
   const [openLogin, setOpenLogin] = useState(initialOpen);
   const [openSignup, setOpenSignup] = useState(false);
+  const [openPwChange, setOpenPwChange] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [signupLoading, setSignupLoading] = useState(false);
+  const [pwChangeLoading, setPwChangeLoading] = useState(false);
+  const [pwForm] = Form.useForm();
 
   useEffect(() => {
     setOpenLogin(initialOpen);
@@ -43,6 +47,10 @@ const LandingPage = () => {
       await login({ username: values.userId, password: values.password });
       message.success('로그인되었습니다.');
       setOpenLogin(false);
+      // admin 계정이나 mustChangePassword가 필요한 경우 비밀번호 변경 모달 유도
+      if (values.userId === 'admin' || user?.mustChangePassword) {
+        setOpenPwChange(true);
+      }
       navigate('/app/dashboard');
     } catch (err: any) {
       message.error(err.response?.data?.message || '로그인에 실패했습니다.');
@@ -76,6 +84,30 @@ const LandingPage = () => {
     }
   };
 
+  const handleChangePassword = async (values: any) => {
+    if (values.newPassword !== values.newPasswordConfirm) {
+      message.error('새 비밀번호와 확인이 일치하지 않습니다.');
+      return;
+    }
+    try {
+      setPwChangeLoading(true);
+      await api.patch('/auth/change-password', {
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword,
+        newPasswordConfirm: values.newPasswordConfirm,
+      });
+      message.success('비밀번호가 변경되었습니다. 다시 로그인해 주세요.');
+      setOpenPwChange(false);
+      logout();
+      navigate('/');
+    } catch (err: any) {
+      message.error(err.response?.data?.message || '비밀번호 변경에 실패했습니다.');
+    } finally {
+      setPwChangeLoading(false);
+      pwForm.resetFields();
+    }
+  };
+
   const openLoginModal = () => {
     setOpenSignup(false);
     setOpenLogin(true);
@@ -86,6 +118,7 @@ const LandingPage = () => {
   };
   const closeLoginModal = () => setOpenLogin(false);
   const closeSignupModal = () => setOpenSignup(false);
+  const closePwChangeModal = () => setOpenPwChange(false);
 
   return (
     <div
@@ -152,12 +185,7 @@ const LandingPage = () => {
         styles={{ mask: { backdropFilter: 'blur(2px)' }, header: { padding: 0 } }}
       >
         <Card
-          style={{
-            padding: 0,
-            borderRadius: 8,
-            overflow: 'hidden',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-          }}
+          style={{ padding: 0, borderRadius: 8, overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}
           bodyStyle={{ padding: 0 }}
         >
           <Row gutter={0}>
@@ -165,18 +193,10 @@ const LandingPage = () => {
               <Title level={2} style={{ marginBottom: 8 }}>Login</Title>
               <Paragraph style={{ marginBottom: 24, color: '#6b7280' }}>Sign in to your account</Paragraph>
               <Form layout="vertical" onFinish={handleLogin}>
-                <Form.Item
-                  label="아이디"
-                  name="userId"
-                  rules={[{ required: true, message: '아이디를 입력하세요.' }]}
-                >
+                <Form.Item label="아이디" name="userId" rules={[{ required: true, message: '아이디를 입력하세요.' }]}>
                   <Input size="large" prefix={<UserOutlined />} placeholder="아이디" />
                 </Form.Item>
-                <Form.Item
-                  label="비밀번호"
-                  name="password"
-                  rules={[{ required: true, message: '비밀번호를 입력하세요.' }]}
-                >
+                <Form.Item label="비밀번호" name="password" rules={[{ required: true, message: '비밀번호를 입력하세요.' }]}>
                   <Input.Password size="large" prefix={<LockOutlined />} placeholder="비밀번호" />
                 </Form.Item>
                 <Form.Item style={{ marginBottom: 16 }}>
@@ -233,19 +253,11 @@ const LandingPage = () => {
                 <Title level={2} style={{ color: '#fff', marginBottom: 16 }}>
                   Login
                 </Title>
-                <Text
-                  style={{
-                    color: '#e6f7ff',
-                    fontSize: 14,
-                    lineHeight: 1.7,
-                    whiteSpace: 'pre-line',
-                    wordBreak: 'keep-all',
-                  }}
-                >
-                  사전에 등록한 사용자만 로그인할 수 있습니다.
-{"\n"}처음 접속한 경우에는
-{"\n"}ID와 동일한 PASSWORD를 입력하고
-{"\n"}이후 새로운 PASSWORD로 변경합니다.
+                <Text style={{ color: '#e6f7ff', fontSize: 14, lineHeight: 1.7, wordBreak: 'keep-all' }}>
+                  <div>사전에 등록한 사용자만 로그인할 수 있습니다.</div>
+                  <div>처음 접속한 경우에는</div>
+                  <div>ID와 동일한 PASSWORD를 입력하고</div>
+                  <div>이후 새로운 PASSWORD로 변경합니다.</div>
                 </Text>
               </div>
             </Col>
@@ -265,12 +277,7 @@ const LandingPage = () => {
         styles={{ mask: { backdropFilter: 'blur(2px)' }, header: { padding: 0 } }}
       >
         <Card
-          style={{
-            padding: 0,
-            borderRadius: 8,
-            overflow: 'hidden',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-          }}
+          style={{ padding: 0, borderRadius: 8, overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}
           bodyStyle={{ padding: 0 }}
         >
           <Row gutter={0}>
@@ -278,25 +285,13 @@ const LandingPage = () => {
               <Title level={2} style={{ marginBottom: 8 }}>Sign Up</Title>
               <Paragraph style={{ marginBottom: 24, color: '#6b7280' }}>필수 정보만 입력하면 됩니다.</Paragraph>
               <Form layout="vertical" onFinish={handleSignup}>
-                <Form.Item
-                  label="아이디"
-                  name="userId"
-                  rules={[{ required: true, message: '아이디를 입력하세요.' }]}
-                >
+                <Form.Item label="아이디" name="userId" rules={[{ required: true, message: '아이디를 입력하세요.' }]}>
                   <Input size="large" prefix={<UserOutlined />} placeholder="아이디" />
                 </Form.Item>
-                <Form.Item
-                  label="이름"
-                  name="displayName"
-                  rules={[{ required: true, message: '이름을 입력하세요.' }]}
-                >
+                <Form.Item label="이름" name="displayName" rules={[{ required: true, message: '이름을 입력하세요.' }]}>
                   <Input size="large" placeholder="이름" />
                 </Form.Item>
-                <Form.Item
-                  label="비밀번호"
-                  name="password"
-                  rules={[{ required: true, message: '비밀번호를 입력하세요.' }]}
-                >
+                <Form.Item label="비밀번호" name="password" rules={[{ required: true, message: '비밀번호를 입력하세요.' }]}>
                   <Input.Password size="large" prefix={<LockOutlined />} placeholder="비밀번호(8자 이상)" />
                 </Form.Item>
                 <Form.Item
@@ -363,22 +358,51 @@ const LandingPage = () => {
                 <Title level={2} style={{ color: '#fff', marginBottom: 16 }}>
                   Sign Up
                 </Title>
-                <Text
-                  style={{
-                    color: '#e6f7ff',
-                    fontSize: 14,
-                    lineHeight: 1.7,
-                    whiteSpace: 'pre-line',
-                    wordBreak: 'keep-all',
-                  }}
-                >
-                  소상공인 대표/직원용 간단 회원가입입니다.
-{"\n"}아이디, 이름, 비밀번호만 입력하면 바로 등록됩니다.
+                <Text style={{ color: '#e6f7ff', fontSize: 14, lineHeight: 1.7, wordBreak: 'keep-all' }}>
+                  <div>소상공인 대표/직원용 간단 회원가입입니다.</div>
+                  <div>아이디, 이름, 비밀번호만 입력하면 바로 등록됩니다.</div>
                 </Text>
               </div>
             </Col>
           </Row>
         </Card>
+      </Modal>
+
+      {/* 비밀번호 변경 모달 (firstLogin, admin 등 강제 유도 시) */}
+      <Modal
+        open={openPwChange}
+        onCancel={closePwChangeModal}
+        footer={null}
+        centered
+        width={560}
+        destroyOnClose
+        closable
+        title="비밀번호 변경"
+      >
+        <Form layout="vertical" form={pwForm} onFinish={handleChangePassword}>
+          <Form.Item label="현재 비밀번호" name="currentPassword" rules={[{ required: true, message: '현재 비밀번호를 입력하세요.' }]}>
+            <Input.Password placeholder="현재 비밀번호" />
+          </Form.Item>
+          <Form.Item
+            label="새 비밀번호"
+            name="newPassword"
+            rules={[{ required: true, message: '새 비밀번호를 입력하세요.' }, { min: 8, message: '8자 이상 입력하세요.' }]}
+          >
+            <Input.Password placeholder="새 비밀번호(8자 이상)" />
+          </Form.Item>
+          <Form.Item
+            label="새 비밀번호 확인"
+            name="newPasswordConfirm"
+            rules={[{ required: true, message: '새 비밀번호 확인을 입력하세요.' }]}
+          >
+            <Input.Password placeholder="새 비밀번호 확인" />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" loading={pwChangeLoading} block>
+              비밀번호 변경
+            </Button>
+          </Form.Item>
+        </Form>
       </Modal>
 
       {/* 하단 영역: 회사/링크 */}
