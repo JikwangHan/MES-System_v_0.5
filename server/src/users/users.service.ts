@@ -2,26 +2,71 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
+import { CreateUserDto } from './dto/create-user.dto';
 
-// UsersService는 사용자 관련 비즈니스 로직을 담당합니다.
-// 현재는 단순 조회/생성을 제공하며, 추후 권한/조직 연계 로직으로 확장할 수 있습니다.
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
+    private readonly usersRepo: Repository<User>,
   ) {}
 
-  // 모든 사용자 목록을 조회합니다.
-  async findAll(): Promise<User[]> {
-    return this.usersRepository.find({ order: { id: 'ASC' } });
+  async findByUsername(username: string): Promise<User | null> {
+    return this.usersRepo.findOne({ where: { username } });
   }
 
-  // 새 사용자를 생성합니다. 이름이 없으면 기본값을 사용합니다.
-  async create(name?: string): Promise<User> {
-    const user = this.usersRepository.create({
-      name: name?.trim() || '테스트 사용자',
+  async findById(id: number): Promise<User | null> {
+    return this.usersRepo.findOne({ where: { id } });
+  }
+
+  async create(dto: CreateUserDto): Promise<User> {
+    const user = this.usersRepo.create(dto);
+    return this.usersRepo.save(user);
+  }
+
+  async bumpFailedLogin(user: User, limit = 5): Promise<void> {
+    user.failedLoginCount += 1;
+    if (user.failedLoginCount >= limit) {
+      user.isLocked = true;
+    }
+    await this.usersRepo.save(user);
+  }
+
+  async resetFailedLoginAndUpdateLoginAt(user: User): Promise<void> {
+    user.failedLoginCount = 0;
+    user.isLocked = false;
+    user.lastLoginAt = new Date();
+    await this.usersRepo.save(user);
+  }
+
+  async updatePassword(user: User, newHash: string): Promise<void> {
+    user.passwordHash = newHash;
+    user.lastPasswordChangedAt = new Date();
+    user.mustChangePassword = false;
+    await this.usersRepo.save(user);
+  }
+
+  async updateProfile(userId: number, payload: Partial<User>): Promise<User> {
+    await this.usersRepo.update(userId, payload);
+    const updated = await this.findById(userId);
+    return updated!;
+  }
+
+  async ensureDefaultAdmin(): Promise<void> {
+    const admin = await this.findByUsername('admin');
+    if (admin) return;
+    const bcrypt = await import('bcrypt');
+    const hash = await bcrypt.hash('admin123', 10);
+    const user = this.usersRepo.create({
+      username: 'admin',
+      displayName: '관리자',
+      passwordHash: hash,
+      role: 'ADMIN',
+      isActive: true,
+      isLocked: false,
+      failedLoginCount: 0,
+      mustChangePassword: true,
     });
-    return this.usersRepository.save(user);
+    await this.usersRepo.save(user);
   }
 }

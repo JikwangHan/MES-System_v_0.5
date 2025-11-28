@@ -4,6 +4,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { User } from './entities/user.entity';
+import { LoginHistory } from './entities/login-history.entity';
 
 @Module({
   // imports 배열에 앱에서 사용할 전역 모듈을 등록합니다.
@@ -23,7 +26,8 @@ import { UsersModule } from './users/users.module';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       // autoLoadEntities: true를 켜면, 각 모듈에서 등록한 엔티티를 자동으로 스캔합니다.
-      autoLoadEntities: true,
+      autoLoadEntities: false,
+      entities: [User, LoginHistory],
       // 개발 단계에서는 synchronize를 true로 두어 엔티티 변경 시 테이블을 자동 생성/수정하게 합니다.
       // 운영 환경에서는 false로 전환하고, 마이그레이션을 사용해야 합니다.
       synchronize: true,
@@ -32,6 +36,7 @@ import { UsersModule } from './users/users.module';
       retryDelay: 2000,
     }),
     UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
