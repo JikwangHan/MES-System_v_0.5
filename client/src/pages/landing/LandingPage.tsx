@@ -1,33 +1,91 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Button, Card, Checkbox, Col, Form, Input, Modal, Row, Typography } from 'antd';
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import {
+  Button,
+  Card,
+  Checkbox,
+  Col,
+  Form,
+  Input,
+  Modal,
+  Row,
+  Typography,
+  message,
+} from 'antd';
+import { UserOutlined, LockOutlined, CloseOutlined } from '@ant-design/icons';
 import { useMemo, useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 
 const { Title, Paragraph, Text } = Typography;
 
-// 메인 랜딩 + 로그인 팝업 화면
+// 메인 랜딩 + 로그인/회원가입 팝업 화면
 // - 전체 배경에 그라데이션과 시스템 소개를 배치
-// - 상단 좌측 로고, 우측 메뉴(Dashboard/회원가입/Login)
+// - 상단 좌측 로고, 우측 메뉴(Dashboard/회원가입/Login or Logout)
 // - 하단 좌측 회사명, 우측 링크(About Us, MES License, EMS V0.5)
-// - 로그인 버튼 또는 /login 진입 시 로그인 모달 오픈
+// - 로그인/회원가입 버튼 클릭 시 모달 오픈
 const LandingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAuthenticated, user, login, logout, signup } = useAuth();
 
   const initialOpen = useMemo(() => location.pathname === '/login', [location.pathname]);
-  const [open, setOpen] = useState(initialOpen);
+  const [openLogin, setOpenLogin] = useState(initialOpen);
+  const [openSignup, setOpenSignup] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [signupLoading, setSignupLoading] = useState(false);
 
   useEffect(() => {
-    setOpen(initialOpen);
+    setOpenLogin(initialOpen);
   }, [initialOpen]);
 
-  const onFinish = () => {
-    // TODO: 실제 로그인 API 연동 예정 (Axios + 토큰 저장 + 라우트 보호)
-    navigate('/app/dashboard');
+  const handleLogin = async (values: any) => {
+    try {
+      setLoginLoading(true);
+      await login({ username: values.userId, password: values.password });
+      message.success('로그인되었습니다.');
+      setOpenLogin(false);
+      navigate('/app/dashboard');
+    } catch (err: any) {
+      message.error(err.response?.data?.message || '로그인에 실패했습니다.');
+    } finally {
+      setLoginLoading(false);
+    }
   };
 
-  const openLogin = () => setOpen(true);
-  const closeLogin = () => setOpen(false);
+  const handleSignup = async (values: any) => {
+    if (values.password !== values.passwordConfirm) {
+      message.error('비밀번호와 확인이 일치하지 않습니다.');
+      return;
+    }
+    try {
+      setSignupLoading(true);
+      await signup({
+        username: values.userId,
+        displayName: values.displayName,
+        password: values.password,
+        passwordConfirm: values.passwordConfirm,
+        phone: values.phone,
+        companyName: values.companyName,
+      });
+      message.success('회원가입이 완료되었습니다. 로그인하세요.');
+      setOpenSignup(false);
+      setOpenLogin(true);
+    } catch (err: any) {
+      message.error(err.response?.data?.message || '회원가입에 실패했습니다.');
+    } finally {
+      setSignupLoading(false);
+    }
+  };
+
+  const openLoginModal = () => {
+    setOpenSignup(false);
+    setOpenLogin(true);
+  };
+  const openSignupModal = () => {
+    setOpenLogin(false);
+    setOpenSignup(true);
+  };
+  const closeLoginModal = () => setOpenLogin(false);
+  const closeSignupModal = () => setOpenSignup(false);
 
   return (
     <div
@@ -48,17 +106,28 @@ const LandingPage = () => {
           padding: '20px 32px',
         }}
       >
-        <div style={{ fontSize: 18, fontWeight: 700 }}>MES Logo</div>
+        <div style={{ fontSize: 18, fontWeight: 700 }}>MES</div>
         <div style={{ display: 'flex', gap: 12 }}>
           <Button type="link" style={{ color: '#e9f4ff' }} onClick={() => navigate('/app/dashboard')}>
             Dashboard
           </Button>
-          <Button type="link" style={{ color: '#e9f4ff' }}>
-            회원가입
-          </Button>
-          <Button type="primary" onClick={openLogin}>
-            Login
-          </Button>
+          {!isAuthenticated && (
+            <Button type="link" style={{ color: '#e9f4ff' }} onClick={openSignupModal}>
+              회원가입
+            </Button>
+          )}
+          {!isAuthenticated ? (
+            <Button type="primary" onClick={openLoginModal}>
+              Login
+            </Button>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ color: '#e9f4ff', fontWeight: 600 }}>
+                {user?.displayName || user?.username}님 로그인 되었습니다.
+              </span>
+              <Button onClick={logout}>Logout</Button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -71,10 +140,10 @@ const LandingPage = () => {
         </div>
       </div>
 
-      {/* 로그인 팝업 모달 */}
+      {/* 로그인 모달 */}
       <Modal
-        open={open}
-        onCancel={closeLogin}
+        open={openLogin}
+        onCancel={closeLoginModal}
         footer={null}
         centered
         width={880}
@@ -92,11 +161,10 @@ const LandingPage = () => {
           bodyStyle={{ padding: 0 }}
         >
           <Row gutter={0}>
-            {/* 로그인 폼 영역 */}
             <Col xs={24} md={12} style={{ padding: 32, background: '#fff' }}>
               <Title level={2} style={{ marginBottom: 8 }}>Login</Title>
               <Paragraph style={{ marginBottom: 24, color: '#6b7280' }}>Sign in to your account</Paragraph>
-              <Form layout="vertical" onFinish={onFinish}>
+              <Form layout="vertical" onFinish={handleLogin}>
                 <Form.Item
                   label="아이디"
                   name="userId"
@@ -112,16 +180,20 @@ const LandingPage = () => {
                   <Input.Password size="large" prefix={<LockOutlined />} placeholder="비밀번호" />
                 </Form.Item>
                 <Form.Item style={{ marginBottom: 16 }}>
-                  <Button type="primary" htmlType="submit" block size="large" style={{ height: 44 }}>
+                  <Button type="primary" htmlType="submit" block size="large" style={{ height: 44 }} loading={loginLoading}>
                     Login
                   </Button>
                 </Form.Item>
                 <Form.Item noStyle>
                   <Checkbox>Remember me?</Checkbox>
                 </Form.Item>
+                <div style={{ marginTop: 12, textAlign: 'right' }}>
+                  <Button type="link" onClick={openSignupModal} style={{ padding: 0 }}>
+                    회원가입
+                  </Button>
+                </div>
               </Form>
             </Col>
-            {/* 안내 영역 */}
             <Col
               xs={24}
               md={12}
@@ -138,31 +210,170 @@ const LandingPage = () => {
             >
               <Button
                 type="text"
-                onClick={closeLogin}
+                icon={<CloseOutlined />}
+                onClick={closeLoginModal}
                 style={{
                   position: 'absolute',
-                  top: 12,
-                  right: 12,
+                  top: 10,
+                  right: 10,
                   color: '#fff',
-                  background: 'rgba(255,255,255,0.15)',
+                  background: 'rgba(255,255,255,0.18)',
                   border: '1px solid rgba(255,255,255,0.3)',
-                  borderRadius: 12,
-                  padding: '2px 10px',
-                  height: 'auto',
-                  lineHeight: 1.4,
+                  borderRadius: 16,
+                  height: 28,
+                  width: 28,
+                  minWidth: 28,
+                  padding: 0,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
-              >
-                닫기 ✕
-              </Button>
-              <div style={{ maxWidth: 300 }}>
+              />
+              <div style={{ maxWidth: 320 }}>
                 <Title level={2} style={{ color: '#fff', marginBottom: 16 }}>
                   Login
                 </Title>
-                <Text style={{ color: '#e6f7ff', fontSize: 14, lineHeight: 1.7, whiteSpace: 'nowrap' }}>
-                  사전에 등록한 사용자만 로그인할 수 있습니다.<br />
-                  처음 접속한 경우에는<br />
-                  ID와 동일한 PASSWORD를 입력하고<br />
-                  이후 새로운 PASSWORD로 변경합니다.
+                <Text
+                  style={{
+                    color: '#e6f7ff',
+                    fontSize: 14,
+                    lineHeight: 1.7,
+                    whiteSpace: 'pre-line',
+                    wordBreak: 'keep-all',
+                  }}
+                >
+                  사전에 등록한 사용자만 로그인할 수 있습니다.
+{"\n"}처음 접속한 경우에는
+{"\n"}ID와 동일한 PASSWORD를 입력하고
+{"\n"}이후 새로운 PASSWORD로 변경합니다.
+                </Text>
+              </div>
+            </Col>
+          </Row>
+        </Card>
+      </Modal>
+
+      {/* 회원가입 모달 */}
+      <Modal
+        open={openSignup}
+        onCancel={closeSignupModal}
+        footer={null}
+        centered
+        width={880}
+        destroyOnClose
+        closable={false}
+        styles={{ mask: { backdropFilter: 'blur(2px)' }, header: { padding: 0 } }}
+      >
+        <Card
+          style={{
+            padding: 0,
+            borderRadius: 8,
+            overflow: 'hidden',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+          }}
+          bodyStyle={{ padding: 0 }}
+        >
+          <Row gutter={0}>
+            <Col xs={24} md={12} style={{ padding: 32, background: '#fff' }}>
+              <Title level={2} style={{ marginBottom: 8 }}>Sign Up</Title>
+              <Paragraph style={{ marginBottom: 24, color: '#6b7280' }}>필수 정보만 입력하면 됩니다.</Paragraph>
+              <Form layout="vertical" onFinish={handleSignup}>
+                <Form.Item
+                  label="아이디"
+                  name="userId"
+                  rules={[{ required: true, message: '아이디를 입력하세요.' }]}
+                >
+                  <Input size="large" prefix={<UserOutlined />} placeholder="아이디" />
+                </Form.Item>
+                <Form.Item
+                  label="이름"
+                  name="displayName"
+                  rules={[{ required: true, message: '이름을 입력하세요.' }]}
+                >
+                  <Input size="large" placeholder="이름" />
+                </Form.Item>
+                <Form.Item
+                  label="비밀번호"
+                  name="password"
+                  rules={[{ required: true, message: '비밀번호를 입력하세요.' }]}
+                >
+                  <Input.Password size="large" prefix={<LockOutlined />} placeholder="비밀번호(8자 이상)" />
+                </Form.Item>
+                <Form.Item
+                  label="비밀번호 확인"
+                  name="passwordConfirm"
+                  rules={[{ required: true, message: '비밀번호 확인을 입력하세요.' }]}
+                >
+                  <Input.Password size="large" prefix={<LockOutlined />} placeholder="비밀번호 확인" />
+                </Form.Item>
+                <Form.Item label="연락처" name="phone">
+                  <Input size="large" placeholder="연락처(선택)" />
+                </Form.Item>
+                <Form.Item label="업체명" name="companyName">
+                  <Input size="large" placeholder="업체명(선택)" />
+                </Form.Item>
+                <Form.Item style={{ marginBottom: 16 }}>
+                  <Button type="primary" htmlType="submit" block size="large" style={{ height: 44 }} loading={signupLoading}>
+                    회원가입
+                  </Button>
+                </Form.Item>
+                <div style={{ textAlign: 'right' }}>
+                  <Button type="link" onClick={openLoginModal} style={{ padding: 0 }}>
+                    로그인으로 돌아가기
+                  </Button>
+                </div>
+              </Form>
+            </Col>
+            <Col
+              xs={24}
+              md={12}
+              style={{
+                background: '#10a0e3',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 32,
+                textAlign: 'center',
+                position: 'relative',
+              }}
+            >
+              <Button
+                type="text"
+                icon={<CloseOutlined />}
+                onClick={closeSignupModal}
+                style={{
+                  position: 'absolute',
+                  top: 10,
+                  right: 10,
+                  color: '#fff',
+                  background: 'rgba(255,255,255,0.18)',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  borderRadius: 16,
+                  height: 28,
+                  width: 28,
+                  minWidth: 28,
+                  padding: 0,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              />
+              <div style={{ maxWidth: 320 }}>
+                <Title level={2} style={{ color: '#fff', marginBottom: 16 }}>
+                  Sign Up
+                </Title>
+                <Text
+                  style={{
+                    color: '#e6f7ff',
+                    fontSize: 14,
+                    lineHeight: 1.7,
+                    whiteSpace: 'pre-line',
+                    wordBreak: 'keep-all',
+                  }}
+                >
+                  소상공인 대표/직원용 간단 회원가입입니다.
+{"\n"}아이디, 이름, 비밀번호만 입력하면 바로 등록됩니다.
                 </Text>
               </div>
             </Col>
