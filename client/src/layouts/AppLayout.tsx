@@ -1,7 +1,8 @@
-import { Layout, Menu } from 'antd';
+import { Layout, Menu, Button } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { DashboardOutlined, ProfileOutlined, DatabaseOutlined } from '@ant-design/icons';
+import { DashboardOutlined, ProfileOutlined, DatabaseOutlined, UserOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const { Header, Sider, Content } = Layout;
 
@@ -10,8 +11,8 @@ const { Header, Sider, Content } = Layout;
 const AppLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout } = useAuth();
 
-  // 메뉴 정의: key에 SCR 코드나 화면 ID를 넣어두면 추적이 쉽습니다.
   const menuItems = useMemo(
     () => [
       {
@@ -32,12 +33,17 @@ const AppLayout = () => {
         icon: <DatabaseOutlined />,
         path: '/app/inventory',
       },
+      {
+        key: 'profile',
+        label: '내 정보',
+        icon: <UserOutlined />,
+        path: '/app/profile',
+      },
       // TODO: 품목/BOM/공정, 작업, 품질, 설비/모니터링, 시스템관리 메뉴 추가
     ],
     [],
   );
 
-  // 현재 경로에 따라 메뉴 선택 상태를 유지
   const selectedKey = useMemo(() => {
     const found = menuItems.find((item) => location.pathname.startsWith(item.path));
     return found ? found.key : 'dashboard';
@@ -70,11 +76,19 @@ const AppLayout = () => {
             padding: '0 16px',
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'space-between',
             borderBottom: '1px solid #e5e5e5',
           }}
         >
-          {/* 추후: 사용자 정보, 로그아웃, 알림 아이콘 등을 배치 */}
           <div style={{ fontWeight: 600 }}>스마트 팩토리 MES 웹서버</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ color: '#4b5563' }}>
+              {user?.displayName || user?.username}님 로그인 되었습니다.
+            </span>
+            <Button size="small" onClick={() => { logout(); navigate('/'); }}>
+              Logout
+            </Button>
+          </div>
         </Header>
         <Content style={{ padding: 24 }}>
           <div
@@ -88,7 +102,6 @@ const AppLayout = () => {
               borderRadius: 8,
             }}
           >
-            {/* 자식 라우트가 이 영역에 렌더링됩니다. */}
             <Outlet />
           </div>
         </Content>

@@ -10,6 +10,7 @@ export type AuthUser = {
   companyName?: string | null;
   lastLoginAt?: string | null;
   lastPasswordChangedAt?: string | null;
+  mustChangePassword?: boolean;
 };
 
 type AuthContextState = {
@@ -26,6 +27,7 @@ type AuthContextState = {
     companyName?: string;
   }) => Promise<void>;
   refreshMe: () => Promise<void>;
+  updateUser: (partial: Partial<AuthUser>) => void;
 };
 
 const AuthContext = createContext<AuthContextState | null>(null);
@@ -63,6 +65,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const updateUser = (partial: Partial<AuthUser>) => {
+    setUser((prev) => (prev ? { ...prev, ...partial } : prev));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -72,6 +78,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         logout,
         signup,
         refreshMe,
+        updateUser,
       }}
     >
       {children}

@@ -5,6 +5,7 @@ import DashboardPage from '../pages/dashboard/DashboardPage';
 import OrderListPage from '../pages/orders/OrderListPage';
 import InventoryListPage from '../pages/inventory/InventoryListPage';
 import ProtectedRoute from './ProtectedRoute';
+import ProfilePage from '../pages/profile/ProfilePage';
 
 // AppRouter는 전체 라우팅과 레이아웃 구성을 담당합니다.
 // - /, /login: 메인(랜딩) + 로그인 팝업 화면
@@ -24,6 +25,7 @@ const AppRouter = () => {
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="orders" element={<OrderListPage />} />
             <Route path="inventory" element={<InventoryListPage />} />
+            <Route path="profile" element={<ProfilePage />} />
             {/* TODO: 품목/BOM/공정, 작업/품질, 설비/모니터링, 시스템관리 등 추가 */}
           </Route>
         </Route>
