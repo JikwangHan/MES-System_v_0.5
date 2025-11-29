@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { User } from './entities/user.entity';
 import { LoginHistory } from './entities/login-history.entity';
 import { Company } from './entities/company.entity';
+import { CompanyModule } from './company/company.module';
 
 @Module({
   // imports 배열에 앱에서 사용할 전역 모듈을 등록합니다.
@@ -38,6 +39,7 @@ import { Company } from './entities/company.entity';
     }),
     UsersModule,
     AuthModule,
+    CompanyModule,
   ],
   controllers: [AppController],
   providers: [AppService],
