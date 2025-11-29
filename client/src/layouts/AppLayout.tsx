@@ -1,20 +1,20 @@
 import { Layout, Menu, Button } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { DashboardOutlined, ProfileOutlined, DatabaseOutlined, UserOutlined } from '@ant-design/icons';
+import { DashboardOutlined, ProfileOutlined, DatabaseOutlined, UserOutlined, ApartmentOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 const { Header, Sider, Content } = Layout;
 
-// AppLayout은 로그인 후 공통 레이아웃을 담당합니다.
-// 좌측 메뉴와 상단 헤더를 제공하고, 오른쪽 Content 영역에 자식 라우트가 표시됩니다.
+// AppLayout은 로그인 후 사용하는 레이아웃입니다.
+// 왼쪽 사이드 메뉴로 화면 전환을 하고, 상단에는 사용자 정보/로그아웃이 표시됩니다.
 const AppLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
 
-  const menuItems = useMemo(
-    () => [
+  const menuItems = useMemo(() => {
+    const base = [
       {
         key: 'dashboard',
         label: '대시보드',
@@ -39,10 +39,17 @@ const AppLayout = () => {
         icon: <UserOutlined />,
         path: '/app/profile',
       },
-      // TODO: 품목/BOM/공정, 작업, 품질, 설비/모니터링, 시스템관리 메뉴 추가
-    ],
-    [],
-  );
+    ];
+    if (user?.role === 'SYSTEM_ADMIN') {
+      base.push({
+        key: 'admin/companies',
+        label: '회사 관리',
+        icon: <ApartmentOutlined />,
+        path: '/app/admin/companies',
+      });
+    }
+    return base;
+  }, [user?.role]);
 
   const selectedKey = useMemo(() => {
     const found = menuItems.find((item) => location.pathname.startsWith(item.path));
@@ -83,7 +90,7 @@ const AppLayout = () => {
           <div style={{ fontWeight: 600 }}>스마트 팩토리 MMS 웹서버</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ color: '#4b5563' }}>
-              {user?.displayName || user?.username}님 로그인 되었습니다.
+              {user?.displayName || user?.username}님 로그인되었습니다.
             </span>
             <Button size="small" onClick={() => { logout(); navigate('/'); }}>
               Logout
