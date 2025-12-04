@@ -64,11 +64,10 @@ export class AuthService {
   }
 
   async login(dto: LoginDto, context?: { ip?: string; userAgent?: string }) {
-    // companyCode가 없으면 SYSTEM_ADMIN(admin) 등 전역 계정 로그인을 허용하기 위해
-    // companyCode 없이 username으로 조회합니다.
-    const companyCode = dto.companyCode || process.env.DEFAULT_COMPANY_CODE;
-    const user = companyCode
-      ? await this.usersService.findByUsernameAndCompany(dto.username, companyCode)
+    // companyCode를 명시적으로 보낸 경우에만 회사별 조회,
+    // 미입력 시에는 전역(admin) 또는 기존 회사 연동 사용자 조회를 위해 username 기준으로 검색합니다.
+    const user = dto.companyCode
+      ? await this.usersService.findByUsernameAndCompany(dto.username, dto.companyCode)
       : await this.usersService.findByUsername(dto.username);
     if (!user || !user.isActive) {
       await this.saveLoginHistory(null, false, 'USER_NOT_FOUND', context);
