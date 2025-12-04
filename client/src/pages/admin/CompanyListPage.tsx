@@ -324,7 +324,7 @@ const CompanyListPage = () => {
             rules={[{ required: true, message: '상태를 선택하세요.' }]}
           >
             <Select>
-              <Select.Option value="ACTIVE">사용 중</Select.Option>
+              <Select.Option value="ACTIVE">사용</Select.Option>
               <Select.Option value="INACTIVE">사용정지</Select.Option>
             </Select>
           </Form.Item>
