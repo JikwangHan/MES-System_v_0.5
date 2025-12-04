@@ -49,7 +49,7 @@ const CompanyListPage = () => {
 
   const statusLabel = (status: string) => {
     if (status === 'ACTIVE') return '사용 중';
-    if (status === 'SUSPENDED') return '사용 정지';
+    if (status === 'SUSPENDED') return '삭제(사용정지)';
     return status;
   };
 
@@ -224,13 +224,15 @@ const CompanyListPage = () => {
                   수정
                 </Button>
                 <Popconfirm
-                  title="비활성화"
-                  description="상태를 SUSPENDED로 전환합니다. 진행할까요?"
+                  title="삭제"
+                  description="상태를 삭제(사용정지)로 전환합니다. 진행할까요?"
                   onConfirm={() => handleDelete(record.id)}
                   okText="예"
                   cancelText="아니오"
                 >
-                  <Button size="small" danger>SUSPEND</Button>
+                  <Button size="small" danger disabled={record.status !== 'ACTIVE'}>
+                    삭제
+                  </Button>
                 </Popconfirm>
               </Space>
             ),
@@ -269,7 +271,7 @@ const CompanyListPage = () => {
           >
             <Select>
               <Select.Option value="ACTIVE">사용 중</Select.Option>
-              <Select.Option value="SUSPENDED">사용 정지</Select.Option>
+              <Select.Option value="SUSPENDED">삭제(사용정지)</Select.Option>
             </Select>
           </Form.Item>
         </Form>

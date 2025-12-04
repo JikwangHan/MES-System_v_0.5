@@ -41,7 +41,7 @@ export class CompanyService {
   async softDelete(id: number): Promise<Company> {
     const company = await this.companyRepo.findOne({ where: { id } });
     if (!company) throw new NotFoundException('회사를 찾을 수 없습니다.');
-    company.status = 'SUSPENDED';
+    company.status = 'SUSPENDED'; // UI에서 "삭제(사용정지)"로 표기
     return this.companyRepo.save(company);
   }
 }
