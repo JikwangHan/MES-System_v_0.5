@@ -7,6 +7,7 @@ import {
   ManyToOne,
 } from 'typeorm';
 import { Company } from './company.entity';
+import { EncryptedTransformer } from '../crypto/encrypted.transformer';
 
 // User 엔티티: 로그인/권한/프로필/보안 관련 필드를 포함합니다.
 // 비밀번호는 bcrypt 해시로만 저장하며, 평문은 절대 저장하지 않습니다.
@@ -19,15 +20,15 @@ export class User {
   @Column({ unique: true, length: 50 })
   username: string;
 
-  // 표시 이름
-  @Column({ length: 100 })
+  // 표시 이름 (개인정보: 암호화)
+  @Column({ length: 100, transformer: new EncryptedTransformer() })
   displayName: string;
 
   // bcrypt 해시만 저장
   @Column({ length: 255 })
   passwordHash: string;
 
-  // 역할: ADMIN | OWNER | STAFF
+  // 역할: SYSTEM_ADMIN | COMPANY_ADMIN | USER
   @Column({ length: 20, default: 'STAFF' })
   role: string;
 
@@ -36,10 +37,10 @@ export class User {
   company: Company | null;
 
   // 연락처, 업체명은 선택 입력 가능 (업체명은 회사 엔티티와 중복되지만, 사용자 상세에 별도로 기록할 수 있게 유지)
-  @Column({ type: 'varchar', length: 50, nullable: true })
+  @Column({ type: 'varchar', length: 50, nullable: true, transformer: new EncryptedTransformer() })
   phone?: string | null;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: true, transformer: new EncryptedTransformer() })
   companyName?: string | null;
 
   // 계정 활성/잠금 상태
