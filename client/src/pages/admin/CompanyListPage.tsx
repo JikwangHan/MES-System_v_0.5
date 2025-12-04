@@ -161,6 +161,19 @@ const CompanyListPage = () => {
     }
   };
 
+  // 삭제(사용정지) 상태에서 다시 사용 중으로 복구
+  const handleRestore = async (id: number) => {
+    try {
+      setLoading(true);
+      await api.patch(`/admin/companies/${id}`, { status: 'ACTIVE' });
+      message.success('상태를 사용 중으로 변경했습니다.');
+      fetchCompanies();
+    } catch (err: any) {
+      message.error(err.response?.data?.message || '복구 처리 중 오류가 발생했습니다.');
+      setLoading(false);
+    }
+  };
+
   return (
     <div>
       <Typography.Title level={3} style={{ marginBottom: 8, textAlign: 'center' }}>
@@ -246,24 +259,34 @@ const CompanyListPage = () => {
             align: 'center',
             render: (_: any, record: Company) => (
               <Space>
-                <Button size="small" onClick={() => openEdit(record)}>
+                <Button
+                  size="small"
+                  onClick={() => openEdit(record)}
+                  disabled={record.status === 'SUSPENDED'} // 삭제(사용정지) 상태면 수정 비활성화
+                >
                   수정
                 </Button>
-                <Popconfirm
-                  title="삭제"
-                  description="상태를 삭제(사용정지)로 전환합니다. 진행할까요?"
-                  onConfirm={() => handleDelete(record.id)}
-                  okText="예"
-                  cancelText="아니오"
-                >
-                  <Button
-                    size="small"
-                    danger
-                    disabled={record.status !== 'ACTIVE'}
-                  >
-                    삭제
+                {record.status === 'SUSPENDED' ? (
+                  <Button size="small" type="primary" onClick={() => handleRestore(record.id)}>
+                    사용
                   </Button>
-                </Popconfirm>
+                ) : (
+                  <Popconfirm
+                    title="삭제"
+                    description="상태를 삭제(사용정지)로 전환합니다. 진행할까요?"
+                    onConfirm={() => handleDelete(record.id)}
+                    okText="예"
+                    cancelText="아니오"
+                  >
+                    <Button
+                      size="small"
+                      danger
+                      disabled={record.status !== 'ACTIVE'}
+                    >
+                      삭제
+                    </Button>
+                  </Popconfirm>
+                )}
               </Space>
             ),
           },
