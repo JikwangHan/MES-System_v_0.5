@@ -36,4 +36,12 @@ export class CompanyService {
     if (dto.status !== undefined) company.status = dto.status;
     return this.companyRepo.save(company);
   }
+
+  // 실제 삭제 대신 상태를 SUSPENDED로 전환하는 소프트 삭제
+  async softDelete(id: number): Promise<Company> {
+    const company = await this.companyRepo.findOne({ where: { id } });
+    if (!company) throw new NotFoundException('회사를 찾을 수 없습니다.');
+    company.status = 'SUSPENDED';
+    return this.companyRepo.save(company);
+  }
 }

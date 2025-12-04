@@ -11,6 +11,7 @@ import {
   Select,
   Modal,
   message,
+  Popconfirm,
 } from 'antd';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
@@ -32,9 +33,9 @@ type CompanyForm = {
 };
 
 // 시스템 관리자 전용 회사 관리 화면
-// - 회사 목록 조회/검색
-// - 회사 추가/수정(상태 변경 포함)
-// - 삭제 대신 상태를 SUSPENDED로 두는 방식 권장
+// - 회사 조회/검색
+// - 회사 추가/수정
+// - 삭제 대신 상태를 SUSPENDED로 전환(소프트 삭제)
 const CompanyListPage = () => {
   const { user } = useAuth();
   const [data, setData] = useState<Company[]>([]);
@@ -46,7 +47,6 @@ const CompanyListPage = () => {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [search, setSearch] = useState<{ code?: string; name?: string; status?: string }>({});
 
-  // 검색 필터 적용 데이터
   const filteredData = useMemo(() => {
     return data.filter((row) => {
       const matchCode = search.code ? row.code.toLowerCase().includes(search.code.toLowerCase()) : true;
@@ -130,6 +130,18 @@ const CompanyListPage = () => {
     }
   };
 
+  const handleDelete = async (id: number) => {
+    try {
+      setLoading(true);
+      await api.delete(`/admin/companies/${id}`);
+      message.success('회사를 비활성화(SUSPENDED)했습니다.');
+      fetchCompanies();
+    } catch (err: any) {
+      message.error(err.response?.data?.message || '삭제 처리 중 오류가 발생했습니다.');
+      setLoading(false);
+    }
+  };
+
   return (
     <div>
       <Typography.Title level={3} style={{ marginBottom: 8 }}>
@@ -198,12 +210,23 @@ const CompanyListPage = () => {
           { title: '생성일', dataIndex: 'createdAt' },
           { title: '수정일', dataIndex: 'updatedAt' },
           {
-            title: '수정',
+            title: '수정/삭제',
             dataIndex: 'action',
             render: (_: any, record: Company) => (
-              <Button size="small" onClick={() => openEdit(record)}>
-                수정
-              </Button>
+              <Space>
+                <Button size="small" onClick={() => openEdit(record)}>
+                  수정
+                </Button>
+                <Popconfirm
+                  title="비활성화"
+                  description="상태를 SUSPENDED로 전환합니다. 진행할까요?"
+                  onConfirm={() => handleDelete(record.id)}
+                  okText="예"
+                  cancelText="아니오"
+                >
+                  <Button size="small" danger>SUSPEND</Button>
+                </Popconfirm>
+              </Space>
             ),
           },
         ]}

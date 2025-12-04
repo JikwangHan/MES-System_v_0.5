@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, UseGuards, Param, ParseIntPipe } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, UseGuards, Param, ParseIntPipe, Delete } from '@nestjs/common';
 import { CompanyService } from './company.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
@@ -29,5 +29,11 @@ export class CompanyController {
   @Patch(':id')
   async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateCompanyDto) {
     return this.companyService.update(id, dto);
+  }
+
+  // 회사 삭제(실제 삭제 대신 상태를 SUSPENDED로 전환하는 소프트 삭제)
+  @Delete(':id')
+  async softDelete(@Param('id', ParseIntPipe) id: number) {
+    return this.companyService.softDelete(id);
   }
 }
