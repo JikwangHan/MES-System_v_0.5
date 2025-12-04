@@ -16,7 +16,7 @@ export type AuthUser = {
 type AuthContextState = {
   isAuthenticated: boolean;
   user: AuthUser | null;
-  login: (payload: { username: string; password: string }) => Promise<AuthUser | null>;
+  login: (payload: { username: string; password: string; companyCode?: string }) => Promise<AuthUser | null>;
   logout: () => void;
   signup: (payload: {
     username: string;
@@ -41,8 +41,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (token) refreshMe();
   }, []);
 
-  const login: AuthContextState['login'] = async ({ username, password }) => {
-    const { data } = await api.post('/auth/login', { username, password });
+  const login: AuthContextState['login'] = async ({ username, password, companyCode }) => {
+    const { data } = await api.post('/auth/login', { username, password, companyCode });
     localStorage.setItem('access_token', data.token);
     setUser(data.user);
     return data.user as AuthUser;

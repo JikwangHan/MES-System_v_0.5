@@ -43,7 +43,11 @@ const LandingPage = () => {
   const handleLogin = async (values: any) => {
     try {
       setLoginLoading(true);
-      const loggedIn = await login({ username: values.userId, password: values.password });
+      const loggedIn = await login({
+        username: values.userId,
+        password: values.password,
+        companyCode: values.companyCode || 'DEFAULT', // 회사코드를 입력하지 않으면 기본값(DEFAULT) 사용
+      });
       message.success('로그인되었습니다.');
       setOpenLogin(false);
       if (loggedIn?.mustChangePassword) {
@@ -193,7 +197,15 @@ const LandingPage = () => {
             <Col xs={24} md={12} style={{ padding: 32, background: '#fff' }}>
               <Title level={2} style={{ marginBottom: 8 }}>Login</Title>
               <Paragraph style={{ marginBottom: 24, color: '#6b7280' }}>Sign in to your account</Paragraph>
-              <Form layout="vertical" onFinish={handleLogin}>
+              <Form layout="vertical" onFinish={handleLogin} initialValues={{ companyCode: 'DEFAULT' }}>
+                <Form.Item
+                  label="회사 코드"
+                  name="companyCode"
+                  rules={[{ required: false }]}
+                  extra="SYSTEM_ADMIN은 회사 구분 없이 로그인 가능, 일반 사용자는 자신의 회사 코드를 입력하면 더 정확합니다."
+                >
+                  <Input size="large" placeholder="회사 코드 (예: DEFAULT)" />
+                </Form.Item>
                 <Form.Item label="아이디" name="userId" rules={[{ required: true, message: '아이디를 입력해 주세요.' }]}>
                   <Input size="large" prefix={<UserOutlined />} placeholder="아이디" />
                 </Form.Item>
