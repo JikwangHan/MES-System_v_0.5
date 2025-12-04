@@ -1,4 +1,8 @@
 import * as crypto from 'crypto';
+import * as dotenv from 'dotenv';
+
+// 서버 부팅 시 .env를 먼저 로드합니다. (AppModule보다 먼저 import되기 때문)
+dotenv.config({ path: process.env.ENV_FILE_PATH || '.env.development' });
 
 // AES-256-GCM 기반 암호화/복호화 유틸리티
 // - 키는 환경변수 DATA_ENCRYPTION_KEY_BASE64 에서 Base64로 로드 (32바이트)
