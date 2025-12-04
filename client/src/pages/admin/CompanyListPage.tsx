@@ -47,6 +47,12 @@ const CompanyListPage = () => {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [search, setSearch] = useState<{ code?: string; name?: string; status?: string }>({});
 
+  const statusLabel = (status: string) => {
+    if (status === 'ACTIVE') return '사용 중';
+    if (status === 'SUSPENDED') return '사용 정지';
+    return status;
+  };
+
   const filteredData = useMemo(() => {
     return data.filter((row) => {
       const matchCode = search.code ? row.code.toLowerCase().includes(search.code.toLowerCase()) : true;
@@ -166,8 +172,8 @@ const CompanyListPage = () => {
           </Form.Item>
           <Form.Item name="status" label="상태">
             <Select allowClear style={{ width: 140 }} placeholder="상태 선택">
-              <Select.Option value="ACTIVE">ACTIVE</Select.Option>
-              <Select.Option value="SUSPENDED">SUSPENDED</Select.Option>
+              <Select.Option value="ACTIVE">사용 중</Select.Option>
+              <Select.Option value="SUSPENDED">사용 정지</Select.Option>
             </Select>
           </Form.Item>
           <Form.Item>
@@ -204,7 +210,7 @@ const CompanyListPage = () => {
             title: '상태',
             dataIndex: 'status',
             render: (status: string) => (
-              <Tag color={status === 'ACTIVE' ? 'green' : 'orange'}>{status}</Tag>
+              <Tag color={status === 'ACTIVE' ? 'green' : 'orange'}>{statusLabel(status)}</Tag>
             ),
           },
           { title: '생성일', dataIndex: 'createdAt' },
@@ -262,8 +268,8 @@ const CompanyListPage = () => {
             rules={[{ required: true, message: '상태를 선택하세요.' }]}
           >
             <Select>
-              <Select.Option value="ACTIVE">ACTIVE</Select.Option>
-              <Select.Option value="SUSPENDED">SUSPENDED</Select.Option>
+              <Select.Option value="ACTIVE">사용 중</Select.Option>
+              <Select.Option value="SUSPENDED">사용 정지</Select.Option>
             </Select>
           </Form.Item>
         </Form>
