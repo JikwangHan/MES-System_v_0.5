@@ -281,7 +281,8 @@ const CompanyListPage = () => {
                     <Button
                       size="small"
                       danger
-                      disabled={record.status !== 'ACTIVE'}
+                      // ACTIVE, INACTIVE에서는 삭제 가능, SUSPENDED에서는 비활성
+                      disabled={record.status === 'SUSPENDED'}
                     >
                       삭제
                     </Button>
