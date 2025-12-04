@@ -13,6 +13,7 @@ import {
   message,
   Popconfirm,
 } from 'antd';
+import dayjs from 'dayjs';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -32,10 +33,28 @@ type CompanyForm = {
   status: string;
 };
 
+// 상태 라벨 한글화
+const statusLabel = (status: string) => {
+  if (status === 'ACTIVE') return '사용 중';
+  if (status === 'SUSPENDED') return '삭제(사용정지)';
+  if (status === 'INACTIVE') return '사용정지';
+  return status;
+};
+
+// 상태 Tag 색상
+const statusColor = (status: string) => {
+  if (status === 'ACTIVE') return 'green';
+  if (status === 'INACTIVE') return 'orange';
+  if (status === 'SUSPENDED') return 'red';
+  return 'default';
+};
+
+const dateFormat = (val?: string) => {
+  if (!val) return '';
+  return dayjs(val).format('YYYY-MM-DD HH:mm:ss');
+};
+
 // 시스템 관리자 전용 회사 관리 화면
-// - 회사 조회/검색
-// - 회사 추가/수정
-// - 삭제 대신 상태를 SUSPENDED로 전환(소프트 삭제)
 const CompanyListPage = () => {
   const { user } = useAuth();
   const [data, setData] = useState<Company[]>([]);
@@ -46,12 +65,6 @@ const CompanyListPage = () => {
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [submitLoading, setSubmitLoading] = useState(false);
   const [search, setSearch] = useState<{ code?: string; name?: string; status?: string }>({});
-
-  const statusLabel = (status: string) => {
-    if (status === 'ACTIVE') return '사용 중';
-    if (status === 'SUSPENDED') return '삭제(사용정지)';
-    return status;
-  };
 
   const filteredData = useMemo(() => {
     return data.filter((row) => {
@@ -105,7 +118,7 @@ const CompanyListPage = () => {
       id: record.id,
       code: record.code,
       name: record.name,
-      status: record.status,
+      status: record.status === 'SUSPENDED' ? 'SUSPENDED' : record.status === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE',
     });
     setModalOpen(true);
   };
@@ -140,7 +153,7 @@ const CompanyListPage = () => {
     try {
       setLoading(true);
       await api.delete(`/admin/companies/${id}`);
-      message.success('회사를 비활성화(SUSPENDED)했습니다.');
+      message.success('상태를 삭제(사용정지)로 변경했습니다.');
       fetchCompanies();
     } catch (err: any) {
       message.error(err.response?.data?.message || '삭제 처리 중 오류가 발생했습니다.');
@@ -150,11 +163,11 @@ const CompanyListPage = () => {
 
   return (
     <div>
-      <Typography.Title level={3} style={{ marginBottom: 8 }}>
+      <Typography.Title level={3} style={{ marginBottom: 8, textAlign: 'center' }}>
         회사 관리
       </Typography.Title>
-      <Typography.Paragraph type="secondary" style={{ marginBottom: 12 }}>
-        시스템 관리자 전용 화면입니다. 회사코드/이름/상태를 조회하고, 회사 추가/수정/비활성(상태 변경)까지 처리할 수 있습니다.
+      <Typography.Paragraph type="secondary" style={{ marginBottom: 12, textAlign: 'center' }}>
+        시스템 관리자 전용 화면입니다. 회사코드/이름/상태를 조회하고, 회사 추가/수정/삭제(사용정지)까지 처리할 수 있습니다.
       </Typography.Paragraph>
 
       <Space style={{ marginBottom: 16 }} wrap>
@@ -173,7 +186,8 @@ const CompanyListPage = () => {
           <Form.Item name="status" label="상태">
             <Select allowClear style={{ width: 140 }} placeholder="상태 선택">
               <Select.Option value="ACTIVE">사용 중</Select.Option>
-              <Select.Option value="SUSPENDED">사용 정지</Select.Option>
+              <Select.Option value="INACTIVE">사용정지</Select.Option>
+              <Select.Option value="SUSPENDED">삭제(사용정지)</Select.Option>
             </Select>
           </Form.Item>
           <Form.Item>
@@ -203,21 +217,33 @@ const CompanyListPage = () => {
         dataSource={filteredData}
         pagination={{ pageSize: 10 }}
         columns={[
-          { title: 'ID', dataIndex: 'id', width: 80 },
-          { title: '회사코드', dataIndex: 'code' },
-          { title: '회사명', dataIndex: 'name' },
+          { title: 'ID', dataIndex: 'id', width: 60, align: 'center' },
+          { title: '회사코드', dataIndex: 'code', align: 'center' },
+          { title: '회사명', dataIndex: 'name', align: 'center' },
           {
             title: '상태',
             dataIndex: 'status',
+            align: 'center',
             render: (status: string) => (
-              <Tag color={status === 'ACTIVE' ? 'green' : 'orange'}>{statusLabel(status)}</Tag>
+              <Tag color={statusColor(status)}>{statusLabel(status)}</Tag>
             ),
           },
-          { title: '생성일', dataIndex: 'createdAt' },
-          { title: '수정일', dataIndex: 'updatedAt' },
+          {
+            title: '생성일',
+            dataIndex: 'createdAt',
+            align: 'center',
+            render: (val: string) => dateFormat(val),
+          },
+          {
+            title: '수정일',
+            dataIndex: 'updatedAt',
+            align: 'center',
+            render: (val: string) => dateFormat(val),
+          },
           {
             title: '수정/삭제',
             dataIndex: 'action',
+            align: 'center',
             render: (_: any, record: Company) => (
               <Space>
                 <Button size="small" onClick={() => openEdit(record)}>
@@ -230,7 +256,11 @@ const CompanyListPage = () => {
                   okText="예"
                   cancelText="아니오"
                 >
-                  <Button size="small" danger disabled={record.status !== 'ACTIVE'}>
+                  <Button
+                    size="small"
+                    danger
+                    disabled={record.status !== 'ACTIVE'}
+                  >
                     삭제
                   </Button>
                 </Popconfirm>
@@ -271,7 +301,7 @@ const CompanyListPage = () => {
           >
             <Select>
               <Select.Option value="ACTIVE">사용 중</Select.Option>
-              <Select.Option value="SUSPENDED">삭제(사용정지)</Select.Option>
+              <Select.Option value="INACTIVE">사용정지</Select.Option>
             </Select>
           </Form.Item>
         </Form>
