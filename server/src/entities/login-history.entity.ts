@@ -34,9 +34,9 @@ export class LoginHistory {
   @Column({ type: 'varchar', length: 50, nullable: true })
   failReason?: string | null; // WRONG_PASSWORD, LOCKED, USER_NOT_FOUND 등
 
-  @Column({ type: 'varchar', length: 100, nullable: true, transformer: new EncryptedTransformer() })
+  @Column({ type: 'varchar', length: 512, nullable: true, transformer: new EncryptedTransformer() })
   ip?: string | null;
 
-  @Column({ type: 'varchar', length: 255, nullable: true, transformer: new EncryptedTransformer() })
+  @Column({ type: 'varchar', length: 512, nullable: true, transformer: new EncryptedTransformer() })
   userAgent?: string | null;
 }

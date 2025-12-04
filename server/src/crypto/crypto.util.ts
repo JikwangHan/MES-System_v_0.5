@@ -27,13 +27,22 @@ export function encryptAesGcm(plain: string): string {
 }
 
 export function decryptAesGcm(payload: string): string {
-  const raw = Buffer.from(payload, 'base64');
-  const iv = raw.subarray(0, 12);
-  const authTag = raw.subarray(raw.length - 16);
-  const cipherText = raw.subarray(12, raw.length - 16);
+  try {
+    const raw = Buffer.from(payload, 'base64');
+    // 최소 길이: IV(12) + TAG(16) + 1 이상
+    if (raw.length < 12 + 16 + 1) {
+      return payload;
+    }
+    const iv = raw.subarray(0, 12);
+    const authTag = raw.subarray(raw.length - 16);
+    const cipherText = raw.subarray(12, raw.length - 16);
 
-  const decipher = crypto.createDecipheriv('aes-256-gcm', KEY, iv);
-  decipher.setAuthTag(authTag);
-  const decrypted = Buffer.concat([decipher.update(cipherText), decipher.final()]);
-  return decrypted.toString('utf8');
+    const decipher = crypto.createDecipheriv('aes-256-gcm', KEY, iv);
+    decipher.setAuthTag(authTag);
+    const decrypted = Buffer.concat([decipher.update(cipherText), decipher.final()]);
+    return decrypted.toString('utf8');
+  } catch (e) {
+    // 기존 평문 데이터가 있을 때 복호화 실패를 피하기 위해 원본을 그대로 반환
+    return payload;
+  }
 }

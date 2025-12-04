@@ -81,14 +81,28 @@ export class UsersService {
       systemCompany = await this.companyRepo.save(systemCompany);
     }
 
-    const admin = await this.usersRepo.findOne({
-      where: { username: 'admin', company: { id: systemCompany.id } },
-      relations: ['company'],
-    });
-    if (admin) return;
-
     const bcrypt = await import('bcrypt');
     const hash = await bcrypt.hash('admin123', 10);
+
+    // username 기준으로 먼저 찾고, 회사가 다르면 SYSTEM으로 재연결
+    const admin = await this.usersRepo.findOne({
+      where: { username: 'admin' },
+      relations: ['company'],
+    });
+
+    if (admin) {
+      admin.passwordHash = hash;
+      admin.isLocked = false;
+      admin.failedLoginCount = 0;
+      admin.mustChangePassword = true;
+      admin.isActive = true;
+      admin.role = 'SYSTEM_ADMIN';
+      admin.company = systemCompany;
+      admin.displayName = admin.displayName || '관리자';
+      await this.usersRepo.save(admin);
+      return;
+    }
+
     const user = this.usersRepo.create({
       username: 'admin',
       displayName: '관리자',

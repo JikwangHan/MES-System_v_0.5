@@ -20,8 +20,8 @@ export class User {
   @Column({ unique: true, length: 50 })
   username: string;
 
-  // 표시 이름 (개인정보: 암호화)
-  @Column({ length: 100, transformer: new EncryptedTransformer() })
+  // 표시 이름 (개인정보: 암호화) - 암호문 길이를 고려해 넉넉히 255자로 설정
+  @Column({ length: 255, transformer: new EncryptedTransformer() })
   displayName: string;
 
   // bcrypt 해시만 저장
@@ -37,10 +37,11 @@ export class User {
   company: Company | null;
 
   // 연락처, 업체명은 선택 입력 가능 (업체명은 회사 엔티티와 중복되지만, 사용자 상세에 별도로 기록할 수 있게 유지)
-  @Column({ type: 'varchar', length: 50, nullable: true, transformer: new EncryptedTransformer() })
+  // 암호문(Base64) 길이를 고려해 충분히 크게 잡습니다.
+  @Column({ type: 'varchar', length: 512, nullable: true, transformer: new EncryptedTransformer() })
   phone?: string | null;
 
-  @Column({ type: 'varchar', length: 100, nullable: true, transformer: new EncryptedTransformer() })
+  @Column({ type: 'varchar', length: 512, nullable: true, transformer: new EncryptedTransformer() })
   companyName?: string | null;
 
   // 계정 활성/잠금 상태
