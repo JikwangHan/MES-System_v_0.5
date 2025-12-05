@@ -47,6 +47,21 @@ const AppLayout = () => {
         icon: <ApartmentOutlined />,
         path: '/app/admin/companies',
       });
+      base.push({
+        key: 'admin/users',
+        label: '사용자 관리',
+        icon: <UserOutlined />,
+        path: '/app/admin/users',
+      });
+    }
+    // 회사 관리자도 사용자 관리 메뉴를 표시 (자기 회사만)
+    if (user?.role === 'COMPANY_ADMIN') {
+      base.push({
+        key: 'admin/users',
+        label: '사용자 관리',
+        icon: <UserOutlined />,
+        path: '/app/admin/users',
+      });
     }
     return base;
   }, [user?.role]);

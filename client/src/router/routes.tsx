@@ -10,6 +10,7 @@ const OrderListPage = lazy(() => import('../pages/orders/OrderListPage'));
 const InventoryListPage = lazy(() => import('../pages/inventory/InventoryListPage'));
 const ProfilePage = lazy(() => import('../pages/profile/ProfilePage'));
 const CompanyListPage = lazy(() => import('../pages/admin/CompanyListPage'));
+const UserListPage = lazy(() => import('../pages/admin/UserListPage'));
 
 // AppRouter는 전체 경로와 레이아웃 구성을 정의합니다.
 // - /, /login: 랜딩(메인) + 로그인 팝업 화면
@@ -63,6 +64,14 @@ const AppRouter = () => {
               element={
                 <Suspense fallback={<div style={{ padding: 24 }}>Loading...</div>}>
                   <CompanyListPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="admin/users"
+              element={
+                <Suspense fallback={<div style={{ padding: 24 }}>Loading...</div>}>
+                  <UserListPage />
                 </Suspense>
               }
             />
