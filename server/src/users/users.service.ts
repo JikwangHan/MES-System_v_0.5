@@ -34,8 +34,21 @@ export class UsersService {
     return this.usersRepo.findOne({ where: { id }, relations: ['company'] });
   }
 
+  async findAll(companyCode?: string): Promise<User[]> {
+    if (companyCode) {
+      const company = await this.companyRepo.findOne({ where: { code: companyCode } });
+      if (!company) return [];
+      return this.usersRepo.find({ where: { company: { id: company.id } }, relations: ['company'] });
+    }
+    return this.usersRepo.find({ relations: ['company'] });
+  }
+
   async create(dto: CreateUserDto): Promise<User> {
     const user = this.usersRepo.create(dto);
+    return this.usersRepo.save(user);
+  }
+
+  async save(user: User): Promise<User> {
     return this.usersRepo.save(user);
   }
 
