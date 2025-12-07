@@ -87,7 +87,7 @@ const UserListPage = () => {
     try {
       const res = await api.get<Company[]>('/admin/companies');
       setCompanies(res.data);
-    } catch (err: any) {
+    } catch {
       // 회사 목록 실패는 무시(선택 옵션)
     }
   };
@@ -206,7 +206,13 @@ const UserListPage = () => {
         시스템 관리자/회사 관리자 전용 화면입니다. 사용자 목록을 조회하고, 역할/상태를 관리할 수 있습니다.
       </Typography.Paragraph>
 
-      <Space style={{ marginBottom: 16 }} wrap>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {isSystem && (
+            <Button type="primary" onClick={openCreate}>사용자 추가</Button>
+          )}
+          <Button onClick={fetchUsers}>새로고침</Button>
+        </div>
         <Form
           layout="inline"
           onFinish={(values) => { setSearch(values); fetchUsers(); }}
@@ -244,17 +250,13 @@ const UserListPage = () => {
             </Form.Item>
           )}
           <Form.Item>
-            <Button type="primary" htmlType="submit">검색</Button>
-          </Form.Item>
-          <Form.Item>
-            <Button onClick={() => { setSearch({}); fetchUsers(); }}>초기화</Button>
+            <Space>
+              <Button type="primary" htmlType="submit">검색</Button>
+              <Button onClick={() => { setSearch({}); fetchUsers(); }}>초기화</Button>
+            </Space>
           </Form.Item>
         </Form>
-        {isSystem && (
-          <Button type="primary" onClick={openCreate}>사용자 추가</Button>
-        )}
-        <Button onClick={fetchUsers}>새로고침</Button>
-      </Space>
+      </div>
 
       {error && (
         <Alert
