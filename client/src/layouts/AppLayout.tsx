@@ -1,8 +1,9 @@
-import { Layout, Menu, Button } from 'antd';
+import { Layout, Menu, Button, Select, Tag } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { DashboardOutlined, ProfileOutlined, DatabaseOutlined, UserOutlined, ApartmentOutlined } from '@ant-design/icons';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { api } from '../lib/api';
 
 const { Header, Sider, Content } = Layout;
 
@@ -12,6 +13,32 @@ const AppLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const [companies, setCompanies] = useState<{ code: string; name: string }[]>([]);
+  const [currentCompany, setCurrentCompany] = useState<string | undefined>(localStorage.getItem('current_company_code') || undefined);
+
+  // SYSTEM_ADMIN일 때 회사 목록 조회
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      if (user?.role !== 'SYSTEM_ADMIN') return;
+      try {
+        const res = await api.get('/admin/companies');
+        setCompanies(res.data || []);
+      } catch {
+        // 무시
+      }
+    };
+    fetchCompanies();
+  }, [user?.role]);
+
+  // COMPANY_ADMIN/USER는 자신의 회사 코드로 고정
+  useEffect(() => {
+    if (user?.role === 'COMPANY_ADMIN' || user?.role === 'USER') {
+      if (user?.company?.code) {
+        localStorage.setItem('current_company_code', user.company.code);
+        setCurrentCompany(user.company.code);
+      }
+    }
+  }, [user]);
 
   const menuItems = useMemo(() => {
     const base = [
@@ -102,7 +129,29 @@ const AppLayout = () => {
             borderBottom: '1px solid #e5e5e5',
           }}
         >
-          <div style={{ fontWeight: 600 }}>스마트 팩토리 MMS 웹서버</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontWeight: 600 }}>스마트 팩토리 MMS 웹서버</div>
+            {user?.role === 'SYSTEM_ADMIN' && (
+              <Select
+                style={{ width: 220 }}
+                placeholder="회사 선택"
+                value={currentCompany}
+                onChange={(code) => {
+                  setCurrentCompany(code);
+                  localStorage.setItem('current_company_code', code);
+                }}
+              >
+                {companies.map((c) => (
+                  <Select.Option key={c.code} value={c.code}>
+                    {c.name} ({c.code})
+                  </Select.Option>
+                ))}
+              </Select>
+            )}
+            {(user?.role === 'COMPANY_ADMIN' || user?.role === 'USER') && user?.company?.name && (
+              <Tag color="blue">{user.company.name} ({user.company.code})</Tag>
+            )}
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ color: '#4b5563' }}>
               {user?.displayName || user?.username}님 로그인되었습니다.

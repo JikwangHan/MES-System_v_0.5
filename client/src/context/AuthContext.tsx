@@ -6,6 +6,11 @@ export type AuthUser = {
   username: string;
   displayName: string;
   role: string;
+  company?: {
+    id: number;
+    code: string;
+    name: string;
+  } | null;
   phone?: string | null;
   companyName?: string | null;
   lastLoginAt?: string | null;
@@ -45,6 +50,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data } = await api.post('/auth/login', { username, password, companyCode });
     localStorage.setItem('access_token', data.token);
     setUser(data.user);
+    // 시스템 관리자일 경우 회사 선택 초기화, 회사 사용자는 자신의 회사 코드 저장
+    if (data.user?.company?.code) {
+      localStorage.setItem('current_company_code', data.user.company.code);
+    }
     return data.user as AuthUser;
   };
 
@@ -61,8 +70,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { data } = await api.get('/auth/me');
       setUser(data);
+      if (data?.company?.code) {
+        localStorage.setItem('current_company_code', data.company.code);
+      }
     } catch (e) {
       localStorage.removeItem('access_token');
+      localStorage.removeItem('current_company_code');
       setUser(null);
     }
   };
