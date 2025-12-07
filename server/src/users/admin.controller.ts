@@ -27,10 +27,12 @@ export class AdminUsersController {
   @Get('company/users')
   @Roles('SYSTEM_ADMIN', 'COMPANY_ADMIN')
   async findByCompany(@Query('companyCode') companyCode: string, @Req() req: any) {
-    // SYSTEM_ADMIN: query companyCode 우선, 없으면 전체
-    // COMPANY_ADMIN: 자신의 회사 기준 (companyId로 조회 후 code 추출)
-    let targetCode: string | undefined = companyCode;
-    if (!targetCode && req.user?.companyId) {
+    // SYSTEM_ADMIN: query companyCode 사용 (없으면 전체)
+    // COMPANY_ADMIN: 자기 회사만 강제
+    let targetCode: string | undefined = undefined;
+    if (req.user?.role === 'SYSTEM_ADMIN') {
+      targetCode = companyCode;
+    } else {
       const me = await this.usersService.findById(req.user.userId);
       targetCode = me?.company?.code;
     }
