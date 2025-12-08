@@ -61,6 +61,7 @@ const CompanyListPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form] = Form.useForm<CompanyForm>();
+  const [searchForm] = Form.useForm();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -183,36 +184,49 @@ const CompanyListPage = () => {
         시스템 관리자 전용 화면입니다. 회사코드/이름/상태를 조회하고, 회사 추가/수정/삭제(사용정지)까지 처리할 수 있습니다.
       </Typography.Paragraph>
 
-      <Space style={{ marginBottom: 16 }} wrap>
-        <Form
-          layout="inline"
-          onFinish={(values) => setSearch(values)}
-          initialValues={search}
-          style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
-        >
-          <Form.Item name="code" label="회사코드">
-            <Input allowClear placeholder="예: DEFAULT" />
-          </Form.Item>
-          <Form.Item name="name" label="회사명">
-            <Input allowClear placeholder="회사명" />
-          </Form.Item>
-          <Form.Item name="status" label="상태">
-            <Select allowClear style={{ width: 140 }} placeholder="상태 선택">
-              <Select.Option value="ACTIVE">사용 중</Select.Option>
-              <Select.Option value="INACTIVE">사용정지</Select.Option>
-              <Select.Option value="SUSPENDED">삭제(사용정지)</Select.Option>
-            </Select>
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit">검색</Button>
-          </Form.Item>
-          <Form.Item>
-            <Button onClick={() => { setSearch({}); }}>초기화</Button>
-          </Form.Item>
-        </Form>
-        <Button type="primary" onClick={openCreate}>회사 추가</Button>
-        <Button onClick={fetchCompanies}>새로고침</Button>
-      </Space>
+      {/* 검색/버튼 영역: 폼과 액션 버튼을 분리해 초기화 시 필드까지 리셋 */}
+      <Form
+        id="companySearchForm"
+        form={searchForm}
+        layout="inline"
+        onFinish={(values) => setSearch(values)}
+        initialValues={search}
+        style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}
+      >
+        <Form.Item name="code" label="회사코드">
+          <Input allowClear placeholder="예: DEFAULT" />
+        </Form.Item>
+        <Form.Item name="name" label="회사명">
+          <Input allowClear placeholder="회사명" />
+        </Form.Item>
+        <Form.Item name="status" label="상태">
+          <Select allowClear style={{ width: 140 }} placeholder="상태 선택">
+            <Select.Option value="ACTIVE">사용 중</Select.Option>
+            <Select.Option value="INACTIVE">사용정지</Select.Option>
+            <Select.Option value="SUSPENDED">삭제(사용정지)</Select.Option>
+          </Select>
+        </Form.Item>
+      </Form>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Button type="primary" onClick={openCreate}>회사 추가</Button>
+          <Button onClick={fetchCompanies}>새로고침</Button>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Button type="primary" htmlType="submit" form="companySearchForm">
+            검색
+          </Button>
+          <Button
+            onClick={() => {
+              setSearch({});
+              searchForm.resetFields();
+              fetchCompanies();
+            }}
+          >
+            초기화
+          </Button>
+        </div>
+      </div>
 
       {error && (
         <Alert

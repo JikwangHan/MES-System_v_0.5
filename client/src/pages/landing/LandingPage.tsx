@@ -34,10 +34,25 @@ const LandingPage = () => {
   const [signupLoading, setSignupLoading] = useState(false);
   const [pwChangeLoading, setPwChangeLoading] = useState(false);
   const [pwForm] = Form.useForm();
+  const [signupForm] = Form.useForm();
+  const [companies, setCompanies] = useState<{ code: string; name: string }[]>([]);
 
   useEffect(() => {
     setOpenLogin(initialOpen);
   }, [initialOpen]);
+
+  // 활성 회사 목록 조회 (비로그인 상태에서도 호출)
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const res = await api.get('/companies');
+        setCompanies(res.data || []);
+      } catch {
+        setCompanies([]);
+      }
+    };
+    fetchCompanies();
+  }, []);
 
   // 로그인 처리 (회사코드 입력 없이 기본 회사 코드 사용)
   const handleLogin = async (values: any) => {
@@ -80,6 +95,7 @@ const LandingPage = () => {
       message.success('회원가입이 완료되었습니다. 로그인해 주세요.');
       setOpenSignup(false);
       setOpenLogin(true);
+      signupForm.resetFields();
     } catch (err: any) {
       message.error(err.response?.data?.message || '회원가입에 실패했습니다.');
     } finally {
@@ -288,7 +304,7 @@ const LandingPage = () => {
             <Col xs={24} md={12} style={{ padding: 32, background: '#fff' }}>
               <Title level={2} style={{ marginBottom: 8 }}>Sign Up</Title>
               <Paragraph style={{ marginBottom: 24, color: '#6b7280' }}>필수 항목을 입력하면 가입이 완료됩니다.</Paragraph>
-              <Form layout="vertical" onFinish={handleSignup}>
+              <Form layout="vertical" onFinish={handleSignup} form={signupForm}>
                 <Form.Item
                   label="회원 구분"
                   name="role"
@@ -300,9 +316,33 @@ const LandingPage = () => {
                     <Option value="USER">소상공인/직원</Option>
                   </Select>
                 </Form.Item>
-                <Form.Item label="업체명" name="companyName" rules={[{ required: true, message: '업체명을 입력해 주세요.' }]}>
-                  <Input size="large" placeholder="업체명" />
-                </Form.Item>
+                {/* 시스템 관리자는 자유 입력, 그 외는 회사 목록에서 선택 */}
+                {user?.role === 'SYSTEM_ADMIN' ? (
+                  <Form.Item label="업체명" name="companyName" rules={[{ required: true, message: '업체명을 입력해 주세요.' }]}>
+                    <Input size="large" placeholder="업체명" />
+                  </Form.Item>
+                ) : (
+                  <Form.Item
+                    label="업체명"
+                    name="companyName"
+                    rules={[{ required: true, message: '회사명을 선택해 주세요.' }]}
+                  >
+                    <Select
+                      size="large"
+                      placeholder={companies.length ? '회사 선택' : '등록된 회사를 불러오지 못했습니다.'}
+                      loading={!companies.length}
+                      allowClear
+                      showSearch
+                      optionFilterProp="children"
+                    >
+                      {companies.map((c) => (
+                        <Option key={c.code} value={c.name}>
+                          {c.name} ({c.code})
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                )}
                 <Form.Item label="아이디" name="userId" rules={[{ required: true, message: '아이디를 입력해 주세요.' }]}>
                   <Input size="large" prefix={<UserOutlined />} placeholder="아이디" />
                 </Form.Item>

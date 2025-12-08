@@ -16,6 +16,14 @@ export class CompanyService {
     return this.companyRepo.find({ order: { id: 'ASC' } });
   }
 
+  // 활성(ACTIVE) 상태의 회사만 반환 - 공개/회원가입용
+  async findActive(): Promise<Company[]> {
+    return this.companyRepo.find({
+      where: { status: 'ACTIVE' },
+      order: { id: 'ASC' },
+    });
+  }
+
   async create(dto: CreateCompanyDto): Promise<Company> {
     const exists = await this.companyRepo.findOne({ where: { code: dto.code } });
     if (exists) {
