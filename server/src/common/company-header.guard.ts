@@ -10,7 +10,8 @@ export class CompanyHeaderGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     const role = request.user?.role;
-    if (!role) return false;
+    // 인증되지 않은 공개 엔드포인트(/auth/login 등)는 통과
+    if (!role) return true;
 
     const headerCode = request.headers?.['x-company-code'];
     // SYSTEM_ADMIN만 헤더 사용 가능. 다른 역할은 헤더를 제거하고 진행.
