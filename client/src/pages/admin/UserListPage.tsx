@@ -275,9 +275,17 @@ const UserListPage = () => {
           <Button type="primary" htmlType="submit" form="userSearchForm">검색</Button>
           <Button
             onClick={() => {
-              setSearch({});
               searchForm.resetFields();
-              fetchUsers({});
+              searchForm.setFieldsValue({
+                username: undefined,
+                displayName: undefined,
+                role: undefined,
+                isActive: undefined,
+                companyCode: undefined,
+              });
+              const empty = {};
+              setSearch(empty);
+              fetchUsers(empty);
             }}
           >
             초기화

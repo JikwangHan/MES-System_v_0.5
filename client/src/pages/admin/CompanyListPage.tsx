@@ -218,8 +218,14 @@ const CompanyListPage = () => {
           </Button>
           <Button
             onClick={() => {
-              setSearch({});
               searchForm.resetFields();
+              searchForm.setFieldsValue({
+                code: undefined,
+                name: undefined,
+                status: undefined,
+              });
+              const empty = {};
+              setSearch(empty);
               fetchCompanies();
             }}
           >
