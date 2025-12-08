@@ -82,6 +82,10 @@ export class AdminUsersController {
     if (dto.phone !== undefined) user.phone = dto.phone;
     if (dto.role !== undefined) user.role = dto.role;
     if (dto.isActive !== undefined) user.isActive = dto.isActive;
+    if (dto.companyCode) {
+      const company = await this.usersService.ensureCompany(dto.companyCode, dto.companyCode);
+      user.company = company;
+    }
     if (dto.isLocked !== undefined) {
       user.isLocked = dto.isLocked;
       if (!dto.isLocked) {

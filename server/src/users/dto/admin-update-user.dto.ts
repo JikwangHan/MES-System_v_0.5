@@ -7,6 +7,10 @@ export class AdminUpdateUserDto {
 
   @IsOptional()
   @IsString()
+  companyCode?: string;
+
+  @IsOptional()
+  @IsString()
   phone?: string;
 
   @IsOptional()

@@ -189,6 +189,7 @@ const UserListPage = () => {
           phone: values.phone,
           role: values.role,
           isActive: values.isActive,
+          companyCode: values.companyCode,
         });
         message.success('사용자 정보를 수정했습니다.');
       }
