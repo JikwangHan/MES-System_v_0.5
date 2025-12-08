@@ -18,3 +18,21 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// 인증 만료/권한 오류 시 공통 처리
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    if (status === 401 || status === 403) {
+      // 토큰/회사코드 초기화 후 메인으로 이동
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('current_company_code');
+      // 이미 루트라면 새로고침만
+      if (window.location.pathname !== '/') {
+        window.location.href = '/';
+      }
+    }
+    return Promise.reject(error);
+  },
+);
