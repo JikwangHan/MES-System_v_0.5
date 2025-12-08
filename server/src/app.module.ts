@@ -9,6 +9,7 @@ import { User } from './entities/user.entity';
 import { LoginHistory } from './entities/login-history.entity';
 import { Company } from './entities/company.entity';
 import { CompanyModule } from './company/company.module';
+import { EquipmentModule } from './equipment/equipment.module';
 import { UsersService } from './users/users.service';
 
 @Module({
@@ -41,6 +42,7 @@ import { UsersService } from './users/users.service';
     UsersModule,
     AuthModule,
     CompanyModule,
+    EquipmentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
