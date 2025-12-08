@@ -206,7 +206,7 @@ const LandingPage = () => {
       >
         <Card
           style={{ padding: 0, borderRadius: 8, overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}
-          bodyStyle={{ padding: 0 }}
+          styles={{ body: { padding: 0 } }}
         >
           <Row gutter={0}>
             <Col xs={24} md={12} style={{ padding: 32, background: '#fff' }}>
@@ -298,7 +298,7 @@ const LandingPage = () => {
       >
         <Card
           style={{ padding: 0, borderRadius: 8, overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}
-          bodyStyle={{ padding: 0 }}
+          styles={{ body: { padding: 0 } }}
         >
           <Row gutter={0}>
             <Col xs={24} md={12} style={{ padding: 32, background: '#fff' }}>

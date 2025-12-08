@@ -8,19 +8,17 @@ type Props = {
 // 추후 막대/혼합 차트 등으로 확장 가능합니다.
 const ChartPanel = ({ data }: Props) => {
   return (
-    <div style={{ width: '100%', height: 300, minWidth: 0 }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Line type="monotone" dataKey="good" stroke="#1677FF" name="양품" />
-          <Line type="monotone" dataKey="defect" stroke="#f5222d" name="불량" />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
+    <ResponsiveContainer width="100%" height={300}>
+      <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip />
+        <Legend />
+        <Line type="monotone" dataKey="good" stroke="#1677FF" name="양품" />
+        <Line type="monotone" dataKey="defect" stroke="#f5222d" name="불량" />
+      </LineChart>
+    </ResponsiveContainer>
   );
 };
 
