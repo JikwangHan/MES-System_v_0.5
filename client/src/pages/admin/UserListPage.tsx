@@ -22,6 +22,7 @@ type User = {
   displayName: string;
   role: string;
   isActive: boolean;
+  isLocked?: boolean;
   company?: { id: number; code: string; name: string };
   phone?: string | null;
   lastLoginAt?: string | null;
@@ -53,6 +54,8 @@ const roleLabel = (role: string) => {
 
 const statusLabel = (active: boolean) => (active ? '사용' : '사용정지');
 const statusColor = (active: boolean) => (active ? 'green' : 'orange');
+const lockLabel = (locked?: boolean) => (locked ? '잠금' : '정상');
+const lockColor = (locked?: boolean) => (locked ? 'volcano' : 'green');
 const dateFormat = (val?: string | null) => (val ? dayjs(val).format('YYYY-MM-DD HH:mm:ss') : '');
 
 // 사용자 관리 화면 (SYSTEM_ADMIN: 전체, COMPANY_ADMIN: 자신의 회사만)
@@ -66,6 +69,7 @@ const UserListPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form] = Form.useForm<UserForm>();
+  const [searchForm] = Form.useForm();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -92,12 +96,12 @@ const UserListPage = () => {
     }
   };
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (criteria = search) => {
     try {
       setLoading(true);
       setError(null);
       if (isSystem) {
-        const companyCode = search.companyCode || undefined;
+        const companyCode = criteria.companyCode || undefined;
         const res = await api.get<User[]>('/admin/users', { params: { companyCode } });
         setData(res.data);
       } else if (isCompanyAdmin) {
@@ -197,6 +201,18 @@ const UserListPage = () => {
     }
   };
 
+  const handleUnlock = async (userId: number) => {
+    try {
+      setLoading(true);
+      await api.patch(`/admin/users/${userId}`, { isLocked: false });
+      message.success('잠금이 해제되었습니다.');
+      fetchUsers();
+    } catch (err: any) {
+      message.error(err.response?.data?.message || '잠금 해제 중 오류가 발생했습니다.');
+      setLoading(false);
+    }
+  };
+
   return (
     <div>
       <Typography.Title level={3} style={{ marginBottom: 8, textAlign: 'center' }}>
@@ -206,56 +222,67 @@ const UserListPage = () => {
         시스템 관리자/회사 관리자 전용 화면입니다. 사용자 목록을 조회하고, 역할/상태를 관리할 수 있습니다.
       </Typography.Paragraph>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, gap: 8, flexWrap: 'wrap' }}>
+      {/* 검색 영역: 한 줄에 필터들을 정렬 */}
+      <Form
+        id="userSearchForm"
+        form={searchForm}
+        layout="inline"
+        initialValues={search}
+        onFinish={(values) => { setSearch(values); fetchUsers(values); }}
+        style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}
+      >
+        <Form.Item name="username" label="아이디">
+          <Input allowClear placeholder="아이디" />
+        </Form.Item>
+        <Form.Item name="displayName" label="이름">
+          <Input allowClear placeholder="이름" />
+        </Form.Item>
+        <Form.Item name="role" label="역할">
+          <Select allowClear style={{ width: 160 }} placeholder="역할 선택">
+            <Select.Option value="SYSTEM_ADMIN">시스템 관리자</Select.Option>
+            <Select.Option value="COMPANY_ADMIN">회사 관리자</Select.Option>
+            <Select.Option value="USER">사용자</Select.Option>
+          </Select>
+        </Form.Item>
+        <Form.Item name="isActive" label="상태">
+          <Select allowClear style={{ width: 140 }} placeholder="상태 선택">
+            <Select.Option value="true">사용</Select.Option>
+            <Select.Option value="false">사용정지</Select.Option>
+          </Select>
+        </Form.Item>
+        {isSystem && (
+          <Form.Item name="companyCode" label="회사">
+            <Select allowClear style={{ width: 160 }} placeholder="회사 선택">
+              {companies.map((c) => (
+                <Select.Option key={c.code} value={c.code}>
+                  {c.name} ({c.code})
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+        )}
+      </Form>
+
+      {/* 버튼 배치: 왼쪽(사용자 추가/새로고침), 오른쪽(검색/초기화) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {isSystem && (
             <Button type="primary" onClick={openCreate}>사용자 추가</Button>
           )}
-          <Button onClick={fetchUsers}>새로고침</Button>
+          <Button onClick={() => fetchUsers()}>새로고침</Button>
         </div>
-        <Form
-          layout="inline"
-          onFinish={(values) => { setSearch(values); fetchUsers(); }}
-          initialValues={search}
-          style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
-        >
-          <Form.Item name="username" label="아이디">
-            <Input allowClear placeholder="아이디" />
-          </Form.Item>
-          <Form.Item name="displayName" label="이름">
-            <Input allowClear placeholder="이름" />
-          </Form.Item>
-          <Form.Item name="role" label="역할">
-            <Select allowClear style={{ width: 160 }} placeholder="역할 선택">
-              <Select.Option value="SYSTEM_ADMIN">시스템 관리자</Select.Option>
-              <Select.Option value="COMPANY_ADMIN">회사 관리자</Select.Option>
-              <Select.Option value="USER">사용자</Select.Option>
-            </Select>
-          </Form.Item>
-          <Form.Item name="isActive" label="상태">
-            <Select allowClear style={{ width: 140 }} placeholder="상태 선택">
-              <Select.Option value="true">사용</Select.Option>
-              <Select.Option value="false">사용정지</Select.Option>
-            </Select>
-          </Form.Item>
-          {isSystem && (
-            <Form.Item name="companyCode" label="회사">
-              <Select allowClear style={{ width: 160 }} placeholder="회사 선택">
-                {companies.map((c) => (
-                  <Select.Option key={c.code} value={c.code}>
-                    {c.name} ({c.code})
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          )}
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit">검색</Button>
-              <Button onClick={() => { setSearch({}); fetchUsers(); }}>초기화</Button>
-            </Space>
-          </Form.Item>
-        </Form>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Button type="primary" htmlType="submit" form="userSearchForm">검색</Button>
+          <Button
+            onClick={() => {
+              setSearch({});
+              searchForm.resetFields();
+              fetchUsers({});
+            }}
+          >
+            초기화
+          </Button>
+        </div>
       </div>
 
       {error && (
@@ -290,6 +317,12 @@ const UserListPage = () => {
             render: (active: boolean) => <Tag color={statusColor(active)}>{statusLabel(active)}</Tag>,
           },
           {
+            title: '잠금',
+            dataIndex: 'isLocked',
+            align: 'center',
+            render: (locked: boolean) => <Tag color={lockColor(locked)}>{lockLabel(locked)}</Tag>,
+          },
+          {
             title: '회사',
             dataIndex: 'company',
             align: 'center',
@@ -308,7 +341,7 @@ const UserListPage = () => {
             render: (val: string) => dateFormat(val),
           },
           {
-            title: '수정',
+            title: '수정/잠금해제',
             dataIndex: 'action',
             align: 'center',
             render: (_: any, record: User) => (
@@ -319,6 +352,14 @@ const UserListPage = () => {
                   disabled={!isSystem}
                 >
                   수정
+                </Button>
+                <Button
+                  size="small"
+                  type="primary"
+                  disabled={!isSystem || record.isLocked === false}
+                  onClick={() => handleUnlock(record.id)}
+                >
+                  잠금해제
                 </Button>
               </Space>
             ),
