@@ -83,13 +83,18 @@ const LandingPage = () => {
     }
     try {
       setSignupLoading(true);
+      const selectedCompany =
+        values.companyCode && companies.find((c) => c.code === values.companyCode);
+      const companyCode = values.companyCode || values.companyName || undefined;
+      const companyName = values.companyName || selectedCompany?.name || values.companyCode;
       await signup({
         username: values.userId,
         displayName: values.displayName,
         password: values.password,
         passwordConfirm: values.passwordConfirm,
         role: values.role,
-        companyName: values.companyName,
+        companyCode,
+        companyName,
         phone: values.phone,
       });
       message.success('회원가입이 완료되었습니다. 로그인해 주세요.');
@@ -326,7 +331,7 @@ const LandingPage = () => {
                     <Option value="USER">소상공인/직원</Option>
                   </Select>
                 </Form.Item>
-                {/* 시스템 관리자는 자유 입력, 그 외는 업체 목록에서 선택 */}
+                {/* 시스템 관리자는 자유 입력, 그 외는 업체 목록에서 선택(업체 코드 저장) */}
                 {user?.role === 'SYSTEM_ADMIN' ? (
                   <Form.Item label="업체명" name="companyName" rules={[{ required: true, message: '업체명을 입력해 주세요.' }]}>
                     <Input size="large" placeholder="업체명" />
@@ -334,7 +339,7 @@ const LandingPage = () => {
                 ) : (
                   <Form.Item
                     label="업체명"
-                    name="companyName"
+                    name="companyCode"
                     rules={[{ required: true, message: '업체명을 선택해 주세요.' }]}
                   >
                     <Select
@@ -346,7 +351,7 @@ const LandingPage = () => {
                       optionFilterProp="children"
                     >
                       {companies.map((c) => (
-                        <Option key={c.code} value={c.name}>
+                        <Option key={c.code} value={c.code}>
                           {c.name} ({c.code})
                         </Option>
                       ))}

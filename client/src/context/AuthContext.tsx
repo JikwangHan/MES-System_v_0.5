@@ -29,6 +29,7 @@ type AuthContextState = {
     password: string;
     passwordConfirm: string;
     role?: string;
+    companyCode?: string;
     companyName?: string;
     phone?: string;
   }) => Promise<void>;
