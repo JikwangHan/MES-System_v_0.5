@@ -82,6 +82,12 @@ export class AdminUsersController {
     if (dto.phone !== undefined) user.phone = dto.phone;
     if (dto.role !== undefined) user.role = dto.role;
     if (dto.isActive !== undefined) user.isActive = dto.isActive;
+    if (dto.isLocked !== undefined) {
+      user.isLocked = dto.isLocked;
+      if (!dto.isLocked) {
+        user.failedLoginCount = 0; // 잠금 해제 시 실패 횟수 초기화
+      }
+    }
     const saved = await this.usersService.save(user);
     const { passwordHash, ...safe } = saved;
     return safe;
