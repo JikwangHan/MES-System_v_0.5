@@ -192,11 +192,11 @@ const LandingPage = () => {
           style={{
             fontSize: 14,
             marginTop: 10,
-            maxWidth: 520,
+            maxWidth: 720,
             marginInline: 'auto',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            textAlign: 'center',
+            wordBreak: 'keep-all',
+            whiteSpace: 'normal',
           }}
         >
           MMS는 제조 프로세스의 품질과 효율성을 개선하는 체계적인 제조 관리 소프트웨어 솔루션입니다.
