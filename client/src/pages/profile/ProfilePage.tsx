@@ -19,7 +19,6 @@ const ProfilePage = () => {
       profileForm.setFieldsValue({
         displayName: data.displayName,
         phone: data.phone,
-        companyName: data.companyName,
       });
       updateUser(data);
     } catch (err: any) {
@@ -47,7 +46,8 @@ const ProfilePage = () => {
   const onUpdateProfile = async (values: any) => {
     try {
       setLoading(true);
-      const { data } = await api.patch('/users/me', values);
+      const payload = { displayName: values.displayName, phone: values.phone };
+      const { data } = await api.patch('/users/me', payload);
       updateUser(data);
       message.success('내 정보가 수정되었습니다.');
     } catch (err: any) {
@@ -107,8 +107,8 @@ const ProfilePage = () => {
               </Form.Item>
             </Col>
             <Col xs={24} md={12}>
-              <Form.Item label="업체명" name="companyName">
-                <Input placeholder="업체명" />
+              <Form.Item label="업체명">
+                <Input value={user?.company?.name ? `${user.company.name} (${user.company.code})` : '-'} disabled />
               </Form.Item>
             </Col>
           </Row>
