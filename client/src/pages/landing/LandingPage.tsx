@@ -468,7 +468,7 @@ const LandingPage = () => {
           left: 24,
           right: 24,
           display: 'flex',
-          justifyContent: 'between',
+          justifyContent: 'space-between',
           alignItems: 'center',
           color: '#d7e9ff',
           fontSize: 13,
