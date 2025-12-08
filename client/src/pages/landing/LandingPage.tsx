@@ -41,7 +41,7 @@ const LandingPage = () => {
     setOpenLogin(initialOpen);
   }, [initialOpen]);
 
-  // 활성 회사 목록 조회 (비로그인 상태에서도 호출)
+  // 활성 업체 목록 조회 (비로그인 상태에서도 호출)
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
@@ -54,7 +54,7 @@ const LandingPage = () => {
     fetchCompanies();
   }, []);
 
-  // 로그인 처리 (회사코드 입력 없이 기본 회사 코드 사용)
+  // 로그인 처리 (회사코드 입력 없이 기본 업체 코드 사용)
   const handleLogin = async (values: any) => {
     try {
       setLoginLoading(true);
@@ -75,7 +75,7 @@ const LandingPage = () => {
     }
   };
 
-  // 회원가입 처리 (회사코드 필드 제거, 관리자 페이지에서 회사 관리 예정)
+  // 회원가입 처리 (회사코드 필드 제거, 관리자 페이지에서 업체 관리 예정)
   const handleSignup = async (values: any) => {
     if (values.password !== values.passwordConfirm) {
       message.error('비밀번호와 확인값이 일치하지 않습니다.');
@@ -316,7 +316,7 @@ const LandingPage = () => {
                     <Option value="USER">소상공인/직원</Option>
                   </Select>
                 </Form.Item>
-                {/* 시스템 관리자는 자유 입력, 그 외는 회사 목록에서 선택 */}
+                {/* 시스템 관리자는 자유 입력, 그 외는 업체 목록에서 선택 */}
                 {user?.role === 'SYSTEM_ADMIN' ? (
                   <Form.Item label="업체명" name="companyName" rules={[{ required: true, message: '업체명을 입력해 주세요.' }]}>
                     <Input size="large" placeholder="업체명" />
@@ -325,11 +325,11 @@ const LandingPage = () => {
                   <Form.Item
                     label="업체명"
                     name="companyName"
-                    rules={[{ required: true, message: '회사명을 선택해 주세요.' }]}
+                    rules={[{ required: true, message: '업체명을 선택해 주세요.' }]}
                   >
                     <Select
                       size="large"
-                      placeholder={companies.length ? '회사 선택' : '등록된 회사를 불러오지 못했습니다.'}
+                      placeholder={companies.length ? '업체 선택' : '등록된 업체를 불러오지 못했습니다.'}
                       loading={!companies.length}
                       allowClear
                       showSearch
@@ -474,7 +474,7 @@ const LandingPage = () => {
           fontSize: 13,
         }}
       >
-        <span>© 2025 MMS (회사 로고/정보 교체 예정)</span>
+        <span>© 2025 MMS (업체 로고/정보 교체 예정)</span>
         <span style={{ display: 'flex', gap: 16 }}>
           <a style={{ color: '#d7e9ff' }}>About Us</a>
           <a style={{ color: '#d7e9ff' }}>MMS License</a>

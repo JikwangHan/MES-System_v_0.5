@@ -48,7 +48,7 @@ type UserForm = {
 
 const roleLabel = (role: string) => {
   if (role === 'SYSTEM_ADMIN') return '시스템 관리자';
-  if (role === 'COMPANY_ADMIN') return '회사 관리자';
+  if (role === 'COMPANY_ADMIN') return '업체 관리자';
   return '사용자';
 };
 
@@ -58,7 +58,7 @@ const lockLabel = (locked?: boolean) => (locked ? '잠금' : '정상');
 const lockColor = (locked?: boolean) => (locked ? 'volcano' : 'green');
 const dateFormat = (val?: string | null) => (val ? dayjs(val).format('YYYY-MM-DD HH:mm:ss') : '');
 
-// 사용자 관리 화면 (SYSTEM_ADMIN: 전체, COMPANY_ADMIN: 자신의 회사만)
+// 사용자 관리 화면 (SYSTEM_ADMIN: 전체, COMPANY_ADMIN: 자신의 업체만)
 const UserListPage = () => {
   const { user } = useAuth();
   const isSystem = user?.role === 'SYSTEM_ADMIN';
@@ -92,7 +92,7 @@ const UserListPage = () => {
       const res = await api.get<Company[]>('/admin/companies');
       setCompanies(res.data);
     } catch {
-      // 회사 목록 실패는 무시(선택 옵션)
+      // 업체 목록 실패는 무시(선택 옵션)
     }
   };
 
@@ -130,7 +130,7 @@ const UserListPage = () => {
     return (
       <Alert
         message="접근 권한이 없습니다."
-        description="사용자 관리는 시스템 관리자 또는 회사 관리자만 확인할 수 있습니다."
+        description="사용자 관리는 시스템 관리자 또는 업체 관리자만 확인할 수 있습니다."
         type="warning"
         showIcon
       />
@@ -220,7 +220,7 @@ const UserListPage = () => {
         사용자 관리
       </Typography.Title>
       <Typography.Paragraph type="secondary" style={{ marginBottom: 12, textAlign: 'center' }}>
-        시스템 관리자/회사 관리자 전용 화면입니다. 사용자 목록을 조회하고, 역할/상태를 관리할 수 있습니다.
+        시스템 관리자/업체 관리자 전용 화면입니다. 사용자 목록을 조회하고, 역할/상태를 관리할 수 있습니다.
       </Typography.Paragraph>
 
       {/* 검색 영역: 한 줄에 필터들을 정렬 */}
@@ -241,7 +241,7 @@ const UserListPage = () => {
         <Form.Item name="role" label="역할">
           <Select allowClear style={{ width: 160 }} placeholder="역할 선택">
             <Select.Option value="SYSTEM_ADMIN">시스템 관리자</Select.Option>
-            <Select.Option value="COMPANY_ADMIN">회사 관리자</Select.Option>
+            <Select.Option value="COMPANY_ADMIN">업체 관리자</Select.Option>
             <Select.Option value="USER">사용자</Select.Option>
           </Select>
         </Form.Item>
@@ -252,8 +252,8 @@ const UserListPage = () => {
           </Select>
         </Form.Item>
         {isSystem && (
-          <Form.Item name="companyCode" label="회사">
-            <Select allowClear style={{ width: 160 }} placeholder="회사 선택">
+          <Form.Item name="companyCode" label="업체">
+            <Select allowClear style={{ width: 160 }} placeholder="업체 선택">
               {companies.map((c) => (
                 <Select.Option key={c.code} value={c.code}>
                   {c.name} ({c.code})
@@ -332,7 +332,7 @@ const UserListPage = () => {
             render: (locked: boolean) => <Tag color={lockColor(locked)}>{lockLabel(locked)}</Tag>,
           },
           {
-            title: '회사',
+            title: '업체',
             dataIndex: 'company',
             align: 'center',
             render: (company: any) => (company ? `${company.name} (${company.code})` : '-'),
@@ -419,7 +419,7 @@ const UserListPage = () => {
           >
             <Select>
               <Select.Option value="SYSTEM_ADMIN">시스템 관리자</Select.Option>
-              <Select.Option value="COMPANY_ADMIN">회사 관리자</Select.Option>
+              <Select.Option value="COMPANY_ADMIN">업체 관리자</Select.Option>
               <Select.Option value="USER">사용자</Select.Option>
             </Select>
           </Form.Item>
@@ -442,18 +442,18 @@ const UserListPage = () => {
           </Form.Item>
           {isSystem && (
             <Form.Item
-              name="companyCode"
-              label="회사"
-              rules={modalMode === 'create' ? [{ required: true, message: '회사를 선택하세요.' }] : []}
+            name="companyCode"
+            label="업체"
+            rules={modalMode === 'create' ? [{ required: true, message: '업체를 선택하세요.' }] : []}
+          >
+            <Select
+              showSearch
+              placeholder="업체 선택"
+              optionFilterProp="children"
             >
-              <Select
-                showSearch
-                placeholder="회사 선택"
-                optionFilterProp="children"
-              >
-                {companies.map((c) => (
-                  <Select.Option key={c.code} value={c.code}>
-                    {c.name} ({c.code})
+              {companies.map((c) => (
+                <Select.Option key={c.code} value={c.code}>
+                  {c.name} ({c.code})
                   </Select.Option>
                 ))}
               </Select>

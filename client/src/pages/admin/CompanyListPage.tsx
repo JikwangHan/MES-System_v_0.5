@@ -54,7 +54,7 @@ const dateFormat = (val?: string) => {
   return dayjs(val).format('YYYY-MM-DD HH:mm:ss');
 };
 
-// 시스템 관리자 전용 회사 관리 화면
+// 시스템 관리자 전용 업체 관리 화면
 const CompanyListPage = () => {
   const { user } = useAuth();
   const [data, setData] = useState<Company[]>([]);
@@ -99,7 +99,7 @@ const CompanyListPage = () => {
     return (
       <Alert
         message="접근 권한이 없습니다."
-        description="회사 관리는 시스템 관리자만 확인할 수 있습니다."
+        description="업체 관리는 시스템 관리자만 확인할 수 있습니다."
         type="warning"
         showIcon
       />
@@ -178,10 +178,10 @@ const CompanyListPage = () => {
   return (
     <div>
       <Typography.Title level={3} style={{ marginBottom: 8, textAlign: 'center' }}>
-        회사 관리
+        업체 관리
       </Typography.Title>
       <Typography.Paragraph type="secondary" style={{ marginBottom: 12, textAlign: 'center' }}>
-        시스템 관리자 전용 화면입니다. 회사코드/이름/상태를 조회하고, 회사 추가/수정/삭제(사용정지)까지 처리할 수 있습니다.
+        시스템 관리자 전용 화면입니다. 업체코드/업체명/상태를 조회하고, 업체 추가/수정/삭제(사용정지)까지 처리할 수 있습니다.
       </Typography.Paragraph>
 
       {/* 검색/버튼 영역: 폼과 액션 버튼을 분리해 초기화 시 필드까지 리셋 */}
@@ -193,11 +193,11 @@ const CompanyListPage = () => {
         initialValues={search}
         style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}
       >
-        <Form.Item name="code" label="회사코드">
+        <Form.Item name="code" label="업체코드">
           <Input allowClear placeholder="예: DEFAULT" />
         </Form.Item>
-        <Form.Item name="name" label="회사명">
-          <Input allowClear placeholder="회사명" />
+        <Form.Item name="name" label="업체명">
+          <Input allowClear placeholder="업체명" />
         </Form.Item>
         <Form.Item name="status" label="상태">
           <Select allowClear style={{ width: 140 }} placeholder="상태 선택">
@@ -209,7 +209,7 @@ const CompanyListPage = () => {
       </Form>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Button type="primary" onClick={openCreate}>회사 추가</Button>
+          <Button type="primary" onClick={openCreate}>업체 추가</Button>
           <Button onClick={fetchCompanies}>새로고침</Button>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -251,8 +251,8 @@ const CompanyListPage = () => {
         pagination={{ pageSize: 10 }}
         columns={[
           { title: 'ID', dataIndex: 'id', width: 60, align: 'center' },
-          { title: '회사코드', dataIndex: 'code', align: 'center' },
-          { title: '회사명', dataIndex: 'name', align: 'center' },
+          { title: '업체코드', dataIndex: 'code', align: 'center' },
+          { title: '업체명', dataIndex: 'name', align: 'center' },
           {
             title: '상태',
             dataIndex: 'status',
@@ -316,7 +316,7 @@ const CompanyListPage = () => {
 
       <Modal
         open={modalOpen}
-        title={modalMode === 'create' ? '회사 추가' : '회사 수정'}
+        title={modalMode === 'create' ? '업체 추가' : '업체 수정'}
         onCancel={() => setModalOpen(false)}
         onOk={() => form.submit()}
         confirmLoading={submitLoading}
@@ -326,17 +326,17 @@ const CompanyListPage = () => {
           <Form.Item name="id" hidden><Input /></Form.Item>
           <Form.Item
             name="code"
-            label="회사코드"
-            rules={[{ required: true, message: '회사코드를 입력하세요.' }]}
+            label="업체코드"
+            rules={[{ required: true, message: '업체코드를 입력하세요.' }]}
           >
             <Input disabled={modalMode === 'edit'} placeholder="예: DEFAULT" />
           </Form.Item>
           <Form.Item
             name="name"
-            label="회사명"
-            rules={[{ required: true, message: '회사명을 입력하세요.' }]}
+            label="업체명"
+            rules={[{ required: true, message: '업체명을 입력하세요.' }]}
           >
-            <Input placeholder="회사명" />
+            <Input placeholder="업체명" />
           </Form.Item>
           <Form.Item
             name="status"

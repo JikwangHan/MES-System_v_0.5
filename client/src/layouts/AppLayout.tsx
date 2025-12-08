@@ -16,7 +16,7 @@ const AppLayout = () => {
   const [companies, setCompanies] = useState<{ code: string; name: string }[]>([]);
   const [currentCompany, setCurrentCompany] = useState<string | undefined>(localStorage.getItem('current_company_code') || undefined);
 
-  // SYSTEM_ADMIN일 때 회사 목록 조회
+  // SYSTEM_ADMIN일 때 업체 목록 조회
   useEffect(() => {
     const fetchCompanies = async () => {
       if (user?.role !== 'SYSTEM_ADMIN') return;
@@ -30,7 +30,7 @@ const AppLayout = () => {
     fetchCompanies();
   }, [user?.role]);
 
-  // COMPANY_ADMIN/USER는 자신의 회사 코드로 고정
+  // COMPANY_ADMIN/USER는 자신의 업체 코드로 고정
   useEffect(() => {
     if (user?.role === 'COMPANY_ADMIN' || user?.role === 'USER') {
       if (user?.company?.code) {
@@ -70,7 +70,7 @@ const AppLayout = () => {
     if (user?.role === 'SYSTEM_ADMIN') {
       base.push({
         key: 'admin/companies',
-        label: '회사 관리',
+        label: '업체 관리',
         icon: <ApartmentOutlined />,
         path: '/app/admin/companies',
       });
