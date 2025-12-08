@@ -188,7 +188,7 @@ const LandingPage = () => {
       <div style={{ textAlign: 'center', marginTop: 60, padding: '0 16px' }}>
         <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: 1 }}>MMS</div>
         <div style={{ fontSize: 20, fontWeight: 600, marginTop: 8 }}>Manufacturing Management System</div>
-        <div style={{ fontSize: 14, marginTop: 10, maxWidth: 520, marginInline: 'auto' }}>
+        <div style={{ fontSize: 14, marginTop: 10, maxWidth: 520, marginInline: 'auto', whiteSpace: 'normal' }}>
           MMS는 제조 프로세스의 품질과 효율성을 개선하는 체계적인 제조 관리 소프트웨어 솔루션입니다.
         </div>
       </div>

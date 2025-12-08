@@ -106,7 +106,12 @@ const AppLayout = () => {
   return (
     <Layout style={{ minHeight: '100vh', background: '#f5f5f5' }}>
       <Sider width={220} theme="light" style={{ borderRight: '1px solid #e5e5e5' }}>
-        <div style={{ padding: 16, fontWeight: 700 }}>MMS v0.5</div>
+        <div
+          style={{ padding: 16, fontWeight: 700, cursor: 'pointer' }}
+          onClick={() => navigate('/')}
+        >
+          MMS v0.5
+        </div>
         <Menu
           mode="inline"
           selectedKeys={[selectedKey]}
