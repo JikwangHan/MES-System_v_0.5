@@ -382,7 +382,7 @@ const UserListPage = () => {
         onCancel={() => setModalOpen(false)}
         onOk={() => form.submit()}
         confirmLoading={submitLoading}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <Form.Item name="id" hidden><Input /></Form.Item>

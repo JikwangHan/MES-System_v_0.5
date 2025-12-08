@@ -200,7 +200,7 @@ const LandingPage = () => {
         footer={null}
         centered
         width={880}
-        destroyOnClose
+        destroyOnHidden
         closable={false}
         styles={{ mask: { backdropFilter: 'blur(2px)' }, header: { padding: 0 } }}
       >
@@ -292,7 +292,7 @@ const LandingPage = () => {
         footer={null}
         centered
         width={880}
-        destroyOnClose
+        destroyOnHidden
         closable={false}
         styles={{ mask: { backdropFilter: 'blur(2px)' }, header: { padding: 0 } }}
       >
@@ -430,7 +430,7 @@ const LandingPage = () => {
         footer={null}
         centered
         width={560}
-        destroyOnClose
+        destroyOnHidden
         closable
         title="비밀번호 변경"
       >
