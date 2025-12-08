@@ -90,7 +90,11 @@ const CompanyListPage = () => {
   };
 
   useEffect(() => {
-    if (user?.role !== 'SYSTEM_ADMIN') return;
+    if (user?.role !== 'SYSTEM_ADMIN') {
+      // 권한 없을 때도 서버에 한 번 요청을 보내 403 발생 시 인터셉터가 토큰/세션을 정리하도록 유도
+      api.get('/admin/companies').catch(() => {});
+      return;
+    }
     fetchCompanies();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.role]);

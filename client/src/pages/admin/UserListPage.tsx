@@ -126,7 +126,11 @@ const UserListPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.role]);
 
+  // 권한 없는 사용자가 접근 시, 서버에 요청을 보내 403이 발생하면 인터셉터가 자동 로그아웃/정리하도록 유도
   if (!isSystem && !isCompanyAdmin) {
+    useEffect(() => {
+      api.get('/admin/users').catch(() => {});
+    }, []);
     return (
       <Alert
         message="접근 권한이 없습니다."
