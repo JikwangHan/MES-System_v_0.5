@@ -13,9 +13,11 @@ import {
   message,
   Popconfirm,
 } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
+import useCompanyCode from '../../hooks/useCompanyCode';
 
 type Company = {
   id: number;
@@ -56,7 +58,9 @@ const dateFormat = (val?: string) => {
 
 // 시스템 관리자 전용 업체 관리 화면
 const CompanyListPage = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { companyCode } = useCompanyCode();
+  const navigate = useNavigate();
   const [data, setData] = useState<Company[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,15 +70,17 @@ const CompanyListPage = () => {
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [submitLoading, setSubmitLoading] = useState(false);
   const [search, setSearch] = useState<{ code?: string; name?: string; status?: string }>({});
+  const [tableKey, setTableKey] = useState<number>(0);
 
   const filteredData = useMemo(() => {
     return data.filter((row) => {
       const matchCode = search.code ? row.code.toLowerCase().includes(search.code.toLowerCase()) : true;
       const matchName = search.name ? row.name.toLowerCase().includes(search.name.toLowerCase()) : true;
       const matchStatus = search.status ? row.status === search.status : true;
-      return matchCode && matchName && matchStatus;
+      const matchCompany = companyCode && companyCode !== 'ALL' ? row.code === companyCode : true;
+      return matchCode && matchName && matchStatus && matchCompany;
     });
-  }, [data, search]);
+  }, [data, search, companyCode]);
 
   const fetchCompanies = async () => {
     try {
@@ -89,15 +95,39 @@ const CompanyListPage = () => {
     }
   };
 
+  // 시스템 관리자가 아니면 모달을 바로 표시하고, 확인/닫기 시 홈 이동 + 로그아웃
+  if (user?.role !== 'SYSTEM_ADMIN') {
+    const handleClose = () => {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('current_company_code');
+      logout();
+      navigate('/', { replace: true });
+    };
+    return (
+      <Modal
+        open={true}
+        title="접근 권한이 없습니다!"
+        okText="확인"
+        centered
+        onOk={handleClose}
+        onCancel={handleClose}
+        maskClosable={false}
+        closable={false}
+      >
+        관리자에게 문의하세요.
+      </Modal>
+    );
+  }
+
   useEffect(() => {
-    if (user?.role !== 'SYSTEM_ADMIN') {
-      // 권한 없을 때도 서버에 한 번 요청을 보내 403 발생 시 인터셉터가 토큰/세션을 정리하도록 유도
-      api.get('/admin/companies').catch(() => {});
-      return;
-    }
+    // 업체 변경 시 검색 조건/페이지 리셋 후 전체 조회
+    searchForm.resetFields();
+    setSearch({});
+    setData([]);
+    setTableKey((prev: number) => prev + 1);
     fetchCompanies();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.role]);
+  }, [user?.role, companyCode]);
 
   if (user?.role !== 'SYSTEM_ADMIN') {
     return (
@@ -249,6 +279,7 @@ const CompanyListPage = () => {
       )}
 
       <Table
+        key={tableKey}
         rowKey="id"
         loading={loading}
         dataSource={filteredData}

@@ -14,7 +14,9 @@ import {
 } from 'antd';
 import dayjs from 'dayjs';
 import { api } from '../../lib/api';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import useCompanyCode from '../../hooks/useCompanyCode';
 
 type User = {
   id: number;
@@ -60,9 +62,12 @@ const dateFormat = (val?: string | null) => (val ? dayjs(val).format('YYYY-MM-DD
 
 // 사용자 관리 화면 (SYSTEM_ADMIN: 전체, COMPANY_ADMIN: 자신의 업체만)
 const UserListPage = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { companyCode, setCompanyCode } = useCompanyCode();
+  const navigate = useNavigate();
   const isSystem = user?.role === 'SYSTEM_ADMIN';
   const isCompanyAdmin = user?.role === 'COMPANY_ADMIN';
+  const [tableKey, setTableKey] = useState<number>(0);
 
   const [data, setData] = useState<User[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -96,13 +101,13 @@ const UserListPage = () => {
     }
   };
 
-  const fetchUsers = async (criteria = search) => {
+  const fetchUsers = async (criteria = search, companyOverride?: string) => {
     try {
       setLoading(true);
       setError(null);
       if (isSystem) {
-        const companyCode = criteria.companyCode || undefined;
-        const res = await api.get<User[]>('/admin/users', { params: { companyCode } });
+        const targetCompany = companyOverride ?? criteria.companyCode ?? companyCode;
+        const res = await api.get<User[]>('/admin/users', { params: { companyCode: targetCompany === 'ALL' ? undefined : targetCompany } });
         setData(res.data);
       } else if (isCompanyAdmin) {
         const res = await api.get<User[]>('/company/users');
@@ -118,28 +123,57 @@ const UserListPage = () => {
   };
 
   useEffect(() => {
+    if (!isSystem && !isCompanyAdmin) {
+      const handleClose = () => {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('current_company_code');
+        logout();
+        navigate('/', { replace: true });
+      };
+      Modal.warning({
+        title: '접근 권한이 없습니다!',
+        content: '관리자에게 문의하세요.',
+        okText: '확인',
+        centered: true,
+        onOk: handleClose,
+        onCancel: handleClose,
+        afterClose: handleClose,
+      });
+      return;
+    }
     if (isSystem) fetchCompanies();
-  }, [isSystem]);
-
-  useEffect(() => {
     if (isSystem || isCompanyAdmin) fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.role]);
 
-  // 권한 없는 사용자가 접근 시, 서버에 요청을 보내 403이 발생하면 인터셉터가 자동 로그아웃/정리하도록 유도
-  if (!isSystem && !isCompanyAdmin) {
-    useEffect(() => {
-      api.get('/admin/users').catch(() => {});
-    }, []);
-    return (
-      <Alert
-        message="접근 권한이 없습니다."
-        description="사용자 관리는 시스템 관리자 또는 업체 관리자만 확인할 수 있습니다."
-        type="warning"
-        showIcon
-      />
-    );
-  }
+  // 업체 변경 이벤트 감지: SYSTEM_ADMIN이 업체를 바꾸면 검색 초기화 후 재조회
+  useEffect(() => {
+    const handler = () => {
+      const code = localStorage.getItem('current_company_code') || 'ALL';
+      // 회사 코드 상태 동기화
+      setCompanyCode(code);
+      // 검색/페이지/데이터 초기화
+      searchForm.resetFields();
+      searchForm.setFieldsValue({
+        username: undefined,
+        displayName: undefined,
+        role: undefined,
+        isActive: undefined,
+        companyCode: code === 'ALL' ? undefined : code,
+      });
+      setSearch(code === 'ALL' ? {} : { companyCode: code });
+      setTableKey((prev) => prev + 1);
+      fetchUsers(code === 'ALL' ? {} : { companyCode: code }, code);
+    };
+    window.addEventListener('company-code-changed', handler);
+    window.addEventListener('storage', handler);
+    handler();
+    return () => {
+      window.removeEventListener('company-code-changed', handler);
+      window.removeEventListener('storage', handler);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSystem]);
 
   const openCreate = () => {
     setModalMode('create');
@@ -309,6 +343,7 @@ const UserListPage = () => {
       )}
 
       <Table
+        key={tableKey}
         rowKey="id"
         loading={loading}
         dataSource={filteredData}

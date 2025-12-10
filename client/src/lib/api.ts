@@ -1,8 +1,16 @@
 import axios from 'axios';
+import { Modal } from 'antd';
+
+// 401/403 반복 시 다중 표시/다중 이동을 막기 위한 플래그
+let isAuthRedirecting = false;
 
 export const api = axios.create({
   baseURL: 'http://localhost:3000',
   withCredentials: false,
+  headers: {
+    'Cache-Control': 'no-cache',
+    Pragma: 'no-cache',
+  },
 });
 
 api.interceptors.request.use((config) => {
@@ -25,12 +33,36 @@ api.interceptors.response.use(
   (error) => {
     const status = error?.response?.status;
     if (status === 401 || status === 403) {
-      // 토큰/회사코드 초기화 후 메인으로 이동
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('current_company_code');
-      // 이미 루트라면 새로고침만
-      if (window.location.pathname !== '/') {
-        window.location.href = '/';
+      // 이미 처리 중이면 중복 실행 방지
+      if (!isAuthRedirecting) {
+        isAuthRedirecting = true;
+        // 토큰/회사코드 초기화 후 안내 메시지
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('current_company_code');
+        Modal.warning({
+          title: '접근 권한이 없습니다',
+          content: '다시 로그인해 주세요.',
+          okText: '확인',
+          centered: true,
+          maskClosable: false,
+          closable: false,
+          onOk: () => {
+            isAuthRedirecting = false;
+            if (window.location.pathname !== '/') {
+              window.location.href = '/';
+            } else {
+              window.location.reload();
+            }
+          },
+          afterClose: () => {
+            isAuthRedirecting = false;
+            if (window.location.pathname !== '/') {
+              window.location.href = '/';
+            } else {
+              window.location.reload();
+            }
+          },
+        });
       }
     }
     return Promise.reject(error);

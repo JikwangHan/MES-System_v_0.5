@@ -2,10 +2,19 @@ import { Card, Row, Col } from 'antd';
 import KpiCard from '../../components/common/KpiCard';
 import ChartPanel from '../../components/common/ChartPanel';
 import DataGrid from '../../components/common/DataGrid';
+import { useEffect } from 'react';
+import useCompanyCode from '../../hooks/useCompanyCode';
 
 // DashboardPage는 KPI 카드, 간단한 차트, 최근 리스트 등을 보여주는 개요 화면입니다.
 // 현재는 더미 데이터를 사용하며, 추후 백엔드 API 연동으로 실제 데이터로 교체합니다.
 const DashboardPage = () => {
+  const { companyCode } = useCompanyCode();
+
+  useEffect(() => {
+    // 추후 API 연동 시 companyCode를 파라미터로 사용
+    // 현재는 더미 데이터라서 리셋만 수행
+  }, [companyCode]);
+
   const kpiList = [
     { title: '오늘 생산량', value: '1,240 EA' },
     { title: '불량률', value: '1.2 %' },

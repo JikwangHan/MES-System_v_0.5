@@ -3,6 +3,7 @@ import { Alert, Button, Card, Form, Input, Select, Space, Table, Tag, Typography
 import dayjs from 'dayjs';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
+import useCompanyCode from '../../hooks/useCompanyCode';
 
 type Equipment = {
   id: number;
@@ -45,11 +46,13 @@ const statusColor = (status: string) => {
 
 const EquipmentListPage = () => {
   const { user } = useAuth();
+  const { companyCode } = useCompanyCode();
   const [data, setData] = useState<Equipment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form] = Form.useForm();
   const [search, setSearch] = useState<{ code?: string; name?: string; status?: string }>({});
+  const [tableKey, setTableKey] = useState(0);
 
   const filtered = useMemo(() => {
     return data.filter((row) => {
@@ -60,11 +63,17 @@ const EquipmentListPage = () => {
     });
   }, [data, search]);
 
-  const fetchList = async () => {
+  const fetchList = async (filters = search, companyOverride?: string) => {
     try {
       setLoading(true);
       setError(null);
-      const res = await api.get<Equipment[]>('/equipment');
+      const params: any = { ...filters };
+      const targetCompany = companyOverride ?? companyCode;
+      // ADMIN 기본 ALL, ALL도 명시적으로 전달해 서버가 전체 조회하도록 요청
+      if (targetCompany) {
+        params.companyCode = targetCompany;
+      }
+      const res = await api.get<Equipment[]>('/equipment', { params });
       setData(res.data);
     } catch (err: any) {
       setError(err.response?.data?.message || '설비 목록을 불러오지 못했습니다.');
@@ -76,6 +85,17 @@ const EquipmentListPage = () => {
   useEffect(() => {
     fetchList();
   }, []);
+
+  // 업체 변경 시 검색/페이지/데이터 초기화 후 재조회
+  useEffect(() => {
+    form.resetFields();
+    setSearch({});
+    setError(null);
+    setData([]);
+    setTableKey((prev) => prev + 1);
+    fetchList({}, companyCode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyCode]);
 
   if (!user) {
     return <Alert type="warning" message="로그인 후 이용 가능합니다." showIcon />;
@@ -94,12 +114,13 @@ const EquipmentListPage = () => {
         <Form
           form={form}
           layout="inline"
-          onFinish={(values) => {
-            setSearch(values);
-          }}
-          initialValues={search}
-          style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}
-        >
+            onFinish={(values) => {
+              setSearch(values);
+              fetchList(values);
+            }}
+            initialValues={search}
+            style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}
+          >
           <Form.Item name="code" label="설비코드">
             <Input allowClear placeholder="설비코드" />
           </Form.Item>
@@ -121,11 +142,12 @@ const EquipmentListPage = () => {
                 onClick={() => {
                   form.resetFields();
                   setSearch({});
+                  fetchList({});
                 }}
               >
                 초기화
               </Button>
-              <Button onClick={fetchList}>새로고침</Button>
+              <Button onClick={() => fetchList(search)}>새로고침</Button>
             </Space>
           </Form.Item>
         </Form>
@@ -135,6 +157,7 @@ const EquipmentListPage = () => {
         )}
 
         <Table
+          key={tableKey}
           rowKey="id"
           loading={loading}
           dataSource={filtered}

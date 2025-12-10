@@ -166,7 +166,7 @@ const ProfilePage = () => {
           <Alert
             style={{ marginTop: 12 }}
             type="warning"
-            message="보안을 위해 비밀번호를 변경해 주세요."
+            title="보안을 위해 비밀번호를 변경해 주세요."
             showIcon
           />
         )}

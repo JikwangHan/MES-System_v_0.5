@@ -11,6 +11,13 @@ import { Company } from './entities/company.entity';
 import { CompanyModule } from './company/company.module';
 import { EquipmentModule } from './equipment/equipment.module';
 import { UsersService } from './users/users.service';
+import { Equipment } from './entities/equipment.entity';
+import { EquipmentEvent } from './entities/equipment-event.entity';
+import { SensorData } from './entities/sensor-data.entity';
+import { WorkOrder } from './entities/work-order.entity';
+import { WorkOperation } from './entities/work-operation.entity';
+import { ProductionResult } from './entities/production-result.entity';
+import { WorkModule } from './work/work.module';
 
 @Module({
   // imports 배열에 앱에서 사용할 전역 모듈을 등록합니다.
@@ -31,7 +38,17 @@ import { UsersService } from './users/users.service';
       database: process.env.DB_NAME,
       // autoLoadEntities: true를 켜면, 각 모듈에서 등록한 엔티티를 자동으로 스캔합니다.
       autoLoadEntities: false,
-      entities: [User, LoginHistory, Company],
+      entities: [
+        User,
+        LoginHistory,
+        Company,
+        Equipment,
+        EquipmentEvent,
+        SensorData,
+        WorkOrder,
+        WorkOperation,
+        ProductionResult,
+      ],
       // 개발 단계에서는 synchronize를 true로 두어 엔티티 변경 시 테이블을 자동 생성/수정하게 합니다.
       // 운영 환경에서는 false로 전환하고, 마이그레이션을 사용해야 합니다.
       synchronize: true,
@@ -43,6 +60,7 @@ import { UsersService } from './users/users.service';
     AuthModule,
     CompanyModule,
     EquipmentModule,
+    WorkModule,
   ],
   controllers: [AppController],
   providers: [AppService],

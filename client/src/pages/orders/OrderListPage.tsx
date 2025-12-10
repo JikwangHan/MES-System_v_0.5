@@ -2,10 +2,21 @@ import { Card } from 'antd';
 import SearchPanel from '../../components/common/SearchPanel';
 import CrudButtonGroup from '../../components/common/CrudButtonGroup';
 import DataGrid from '../../components/common/DataGrid';
+import { useEffect, useState } from 'react';
+import useCompanyCode from '../../hooks/useCompanyCode';
 
 // 수주내역 화면: 검색 영역 + 버튼 그룹 + 그리드 기본 뼈대입니다.
 // 현재는 더미 데이터이며, 추후 백엔드 /orders API와 연동합니다.
 const OrderListPage = () => {
+  const { companyCode } = useCompanyCode();
+  const [tableKey, setTableKey] = useState(0);
+
+  useEffect(() => {
+    // 회사 변경 시 검색/페이지 초기화 효과를 위해 key를 변경
+    setTableKey((prev) => prev + 1);
+    // 추후 API 연동 시 companyCode를 파라미터로 사용
+  }, [companyCode]);
+
   const columns = [
     { title: '수주번호', dataIndex: 'orderNo' },
     { title: '품목명', dataIndex: 'itemName' },
@@ -33,7 +44,7 @@ const OrderListPage = () => {
           onUpload={() => console.log('엑셀 업로드')}
         />
       </div>
-      <DataGrid columns={columns} dataSource={data} pagination={false} />
+      <DataGrid key={tableKey} columns={columns} dataSource={data} pagination={false} />
     </Card>
   );
 };

@@ -21,6 +21,7 @@ export type AuthUser = {
 type AuthContextState = {
   isAuthenticated: boolean;
   user: AuthUser | null;
+  loading: boolean;
   login: (payload: { username: string; password: string; companyCode?: string }) => Promise<AuthUser | null>;
   logout: () => void;
   signup: (payload: {
@@ -41,10 +42,17 @@ const AuthContext = createContext<AuthContextState | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
-    if (token) refreshMe();
+    const init = async () => {
+      if (token) {
+        await refreshMe();
+      }
+      setLoading(false);
+    };
+    init();
   }, []);
 
   const login: AuthContextState['login'] = async ({ username, password, companyCode }) => {
@@ -79,6 +87,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.removeItem('access_token');
       localStorage.removeItem('current_company_code');
       setUser(null);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -91,6 +101,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       value={{
         isAuthenticated: !!user,
         user,
+        loading,
         login,
         logout,
         signup,

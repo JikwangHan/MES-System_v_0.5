@@ -1,9 +1,10 @@
-import { Layout, Menu, Button, Select, Tag } from 'antd';
+import { Layout, Menu, Button, Select, Tag, message } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { DashboardOutlined, ProfileOutlined, DatabaseOutlined, UserOutlined, ApartmentOutlined } from '@ant-design/icons';
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
+import { useCompanyCode } from '../hooks/useCompanyCode';
 
 const { Header, Sider, Content } = Layout;
 
@@ -14,7 +15,7 @@ const AppLayout = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const [companies, setCompanies] = useState<{ code: string; name: string }[]>([]);
-  const [currentCompany, setCurrentCompany] = useState<string | undefined>(localStorage.getItem('current_company_code') || undefined);
+  const { companyCode, setCompanyCode } = useCompanyCode();
 
   // SYSTEM_ADMIN일 때 업체 목록 조회
   useEffect(() => {
@@ -23,8 +24,12 @@ const AppLayout = () => {
       try {
         const res = await api.get('/admin/companies');
         setCompanies(res.data || []);
-      } catch {
-        // 무시
+      } catch (err: any) {
+        if (err?.response?.status === 401 || err?.response?.status === 403) {
+          message.warning('권한이 없습니다. 관리자에게 문의하세요.');
+          logout();
+          navigate('/', { replace: true });
+        }
       }
     };
     fetchCompanies();
@@ -32,12 +37,11 @@ const AppLayout = () => {
 
   // COMPANY_ADMIN/USER는 자신의 업체 코드로 고정
   useEffect(() => {
-    if (user?.role === 'COMPANY_ADMIN' || user?.role === 'USER') {
-      if (user?.company?.code) {
-        localStorage.setItem('current_company_code', user.company.code);
-        setCurrentCompany(user.company.code);
+      if (user?.role === 'COMPANY_ADMIN' || user?.role === 'USER') {
+        if (user?.company?.code) {
+          setCompanyCode(user.company.code);
+        }
       }
-    }
   }, [user]);
 
   const menuItems = useMemo(() => {
@@ -59,6 +63,12 @@ const AppLayout = () => {
         label: '재고현황',
         icon: <DatabaseOutlined />,
         path: '/app/inventory',
+      },
+      {
+        key: 'work/orders',
+        label: '작업지시',
+        icon: <ApartmentOutlined />,
+        path: '/app/work/orders',
       },
       {
         key: 'profile',
@@ -122,7 +132,7 @@ const AppLayout = () => {
           style={{ padding: 16, fontWeight: 700, cursor: 'pointer' }}
           onClick={() => navigate('/')}
         >
-          MMS v0.5
+          스마트팩토리 MMS 웹 서버
         </div>
         <Menu
           mode="inline"
@@ -147,17 +157,21 @@ const AppLayout = () => {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ fontWeight: 600 }}>스마트 팩토리 MMS 웹서버</div>
+            <div style={{ fontWeight: 600 }}>
+              업체명
+            </div>
             {user?.role === 'SYSTEM_ADMIN' && (
               <Select
                 style={{ width: 220 }}
                 placeholder="회사 선택"
-                value={currentCompany}
+                value={companyCode}
                 onChange={(code) => {
-                  setCurrentCompany(code);
-                  localStorage.setItem('current_company_code', code);
+                  setCompanyCode(code);
                 }}
               >
+              <Select.Option key="ALL" value="ALL">
+                전체
+              </Select.Option>
                 {companies.map((c) => (
                   <Select.Option key={c.code} value={c.code}>
                     {c.name} ({c.code})
