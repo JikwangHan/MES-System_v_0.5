@@ -41,11 +41,30 @@ export class DashboardService {
 
     const dateFilter = from ? { ...filter, createdAt: { $gte: from } } : filter;
 
+    // 회사/기간 필터를 적용한 카운트 계산
+    const workQb = this.workRepo.createQueryBuilder('w').leftJoin('w.company', 'c');
+    const orderQb = this.orderRepo.createQueryBuilder('o').leftJoin('o.company', 'c2');
+    const eqQb = this.equipmentRepo.createQueryBuilder('e').leftJoin('e.company', 'c3');
+    const lowStockQb = this.inventoryRepo.createQueryBuilder('i').leftJoin('i.company', 'c4').where('i.status = :low', { low: 'LOW' });
+
+    if (filter?.company) {
+      workQb.where('w.companyId = :cid', { cid: (filter as any).company.id });
+      orderQb.where('o.companyId = :cid', { cid: (filter as any).company.id });
+      eqQb.where('e.companyId = :cid', { cid: (filter as any).company.id });
+      lowStockQb.andWhere('i.companyId = :cid', { cid: (filter as any).company.id });
+    }
+    if (from) {
+      workQb.andWhere('w.createdAt >= :from', { from });
+      orderQb.andWhere('o.createdAt >= :from', { from });
+      eqQb.andWhere('e.createdAt >= :from', { from });
+      lowStockQb.andWhere('i.createdAt >= :from', { from });
+    }
+
     const [workCnt, orderCnt, eqCnt, lowStockCnt] = await Promise.all([
-      this.workRepo.count({ where: filter }),
-      this.orderRepo.count({ where: dateFilter as any }),
-      this.equipmentRepo.count({ where: filter }),
-      this.inventoryRepo.count({ where: { ...filter, status: 'LOW' } }),
+      workQb.getCount(),
+      orderQb.getCount(),
+      eqQb.getCount(),
+      lowStockQb.getCount(),
     ]);
 
     // 지연 수주(납기 초과)
