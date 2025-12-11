@@ -18,6 +18,11 @@ import { WorkOrder } from './entities/work-order.entity';
 import { WorkOperation } from './entities/work-operation.entity';
 import { ProductionResult } from './entities/production-result.entity';
 import { WorkModule } from './work/work.module';
+import { OrdersModule } from './orders/orders.module';
+import { Order } from './entities/order.entity';
+import { Inventory } from './entities/inventory.entity';
+import { InventoryModule } from './inventory/inventory.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   // imports 배열에 앱에서 사용할 전역 모듈을 등록합니다.
@@ -48,6 +53,8 @@ import { WorkModule } from './work/work.module';
         WorkOrder,
         WorkOperation,
         ProductionResult,
+        Order,
+        Inventory,
       ],
       // 개발 단계에서는 synchronize를 true로 두어 엔티티 변경 시 테이블을 자동 생성/수정하게 합니다.
       // 운영 환경에서는 false로 전환하고, 마이그레이션을 사용해야 합니다.
@@ -61,6 +68,9 @@ import { WorkModule } from './work/work.module';
     CompanyModule,
     EquipmentModule,
     WorkModule,
+    OrdersModule,
+    InventoryModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
