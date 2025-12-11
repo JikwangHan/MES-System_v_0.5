@@ -29,24 +29,24 @@ export class DashboardService {
     return company ? { company: { id: company.id } } : {};
   }
 
-  // 기간/회사 필터에 맞춰 일자별 수주 건수를 차트 형태로 반환
+  // 기간/회사 필터에 맞춰 일자별 수주 건수를 차트 형태로 반환 (납기일 기준)
   private async buildOrderChart(filter: any, from?: Date, to?: Date) {
     const qb = this.orderRepo
       .createQueryBuilder('o')
-      .select('DATE(o.createdAt)', 'd')
+      .select('DATE(o.dueDate)', 'd')
       .addSelect('COUNT(*)', 'cnt');
 
     if (filter?.company) {
       qb.where('o.companyId = :cid', { cid: (filter as any).company.id });
     }
     if (from) {
-      qb.andWhere('o.createdAt >= :from', { from });
+      qb.andWhere('o.dueDate >= :from', { from });
     }
     if (to) {
-      qb.andWhere('o.createdAt <= :to', { to });
+      qb.andWhere('o.dueDate <= :to', { to });
     }
 
-    const rows = await qb.groupBy('DATE(o.createdAt)').orderBy('DATE(o.createdAt)', 'ASC').getRawMany();
+    const rows = await qb.groupBy('DATE(o.dueDate)').orderBy('DATE(o.dueDate)', 'ASC').getRawMany();
 
     // Recharts용 데이터로 가공 (good=주문수, defect는 0으로)
     return rows.map((r: any) => ({
@@ -81,13 +81,14 @@ export class DashboardService {
     }
     if (from) {
       workQb.andWhere('w.createdAt >= :from', { from });
-      orderQb.andWhere('o.createdAt >= :from', { from });
+      // 수주는 납기일 기준으로 기간 필터
+      orderQb.andWhere('o.dueDate >= :from', { from });
       eqQb.andWhere('e.createdAt >= :from', { from });
       lowStockQb.andWhere('i.createdAt >= :from', { from });
     }
     if (to) {
       workQb.andWhere('w.createdAt <= :to', { to });
-      orderQb.andWhere('o.createdAt <= :to', { to });
+      orderQb.andWhere('o.dueDate <= :to', { to });
       eqQb.andWhere('e.createdAt <= :to', { to });
       lowStockQb.andWhere('i.createdAt <= :to', { to });
     }
