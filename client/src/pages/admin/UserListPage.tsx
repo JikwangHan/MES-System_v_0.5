@@ -150,8 +150,6 @@ const UserListPage = () => {
   useEffect(() => {
     const handler = () => {
       const code = localStorage.getItem('current_company_code') || 'ALL';
-      // 회사 코드 상태 동기화
-      setCompanyCode(code);
       // 검색/페이지/데이터 초기화
       searchForm.resetFields();
       searchForm.setFieldsValue({

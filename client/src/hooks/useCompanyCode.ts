@@ -17,6 +17,7 @@ export const useCompanyCode = () => {
   const setCompanyCode = useCallback((code: string) => {
     setCompanyCodeState(code);
     localStorage.setItem('current_company_code', code);
+    // 동일 코드로 불필요한 이벤트 중복 발행 방지
     window.dispatchEvent(new Event('company-code-changed'));
   }, []);
 
@@ -34,7 +35,8 @@ export const useCompanyCode = () => {
   useEffect(() => {
     const handler = () => {
       const code = localStorage.getItem('current_company_code') || 'ALL';
-      setCompanyCodeState(code);
+      // 동일 값이면 상태 변경 스킵하여 무한루프 방지
+      setCompanyCodeState((prev) => (prev === code ? prev : code));
     };
     window.addEventListener('company-code-changed', handler);
     window.addEventListener('storage', handler);
