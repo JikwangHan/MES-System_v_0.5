@@ -29,26 +29,32 @@ export class DashboardService {
     return company ? { company: { id: company.id } } : {};
   }
 
-  // 기간/회사 필터에 맞춰 일자별 수주 건수를 차트 형태로 반환 (납기일 기준)
+  // 기간/회사 필터에 맞춰 일자별 수주 건수를 차트 형태로 반환
   private async buildOrderChart(filter: any, from?: Date, to?: Date) {
+    // dueDate가 없을 때는 createdAt으로 대체
     const qb = this.orderRepo
       .createQueryBuilder('o')
-      .select('DATE(o.dueDate)', 'd')
+      .select('DATE(COALESCE(o.dueDate, o.createdAt))', 'd')
       .addSelect('COUNT(*)', 'cnt');
 
     if (filter?.company) {
       qb.where('o.companyId = :cid', { cid: (filter as any).company.id });
     }
     if (from) {
-      qb.andWhere('o.dueDate >= :from', { from });
+      qb.andWhere('COALESCE(o.dueDate, o.createdAt) >= :from', { from });
     }
     if (to) {
-      qb.andWhere('o.dueDate <= :to', { to });
+      qb.andWhere('COALESCE(o.dueDate, o.createdAt) <= :to', { to });
     }
 
-    const rows = await qb.groupBy('DATE(o.dueDate)').orderBy('DATE(o.dueDate)', 'ASC').getRawMany();
+    const rows = await qb.groupBy('DATE(COALESCE(o.dueDate, o.createdAt))').orderBy('d', 'ASC').getRawMany();
 
-    // Recharts용 데이터로 가공 (good=주문수, defect는 0으로)
+    // 데이터가 없으면 오늘 기준 0 포인트라도 반환해 차트가 비지 않도록 처리
+    if (!rows || rows.length === 0) {
+      const base = dayjs().format('MM-DD');
+      return [{ name: base, good: 0, defect: 0 }];
+    }
+
     return rows.map((r: any) => ({
       name: dayjs(r.d).format('MM-DD'),
       good: Number(r.cnt) || 0,
