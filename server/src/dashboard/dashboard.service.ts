@@ -87,14 +87,14 @@ export class DashboardService {
     }
     if (from) {
       workQb.andWhere('w.createdAt >= :from', { from });
-      // 수주는 납기일 기준으로 기간 필터
-      orderQb.andWhere('o.dueDate >= :from', { from });
+      // 수주는 납기일이 없을 경우 생성일 기준으로 기간 필터
+      orderQb.andWhere('COALESCE(o.dueDate, o.createdAt) >= :from', { from });
       eqQb.andWhere('e.createdAt >= :from', { from });
       lowStockQb.andWhere('i.createdAt >= :from', { from });
     }
     if (to) {
       workQb.andWhere('w.createdAt <= :to', { to });
-      orderQb.andWhere('o.dueDate <= :to', { to });
+      orderQb.andWhere('COALESCE(o.dueDate, o.createdAt) <= :to', { to });
       eqQb.andWhere('e.createdAt <= :to', { to });
       lowStockQb.andWhere('i.createdAt <= :to', { to });
     }
@@ -110,8 +110,8 @@ export class DashboardService {
     const overdueOrders = await this.orderRepo
       .createQueryBuilder('o')
       .leftJoinAndSelect('o.company', 'company')
-      .where(from ? 'o.createdAt >= :from' : '1=1', from ? { from } : {})
-      .andWhere(to ? 'o.createdAt <= :to' : '1=1', to ? { to } : {})
+      .where(from ? 'COALESCE(o.dueDate, o.createdAt) >= :from' : '1=1', from ? { from } : {})
+      .andWhere(to ? 'COALESCE(o.dueDate, o.createdAt) <= :to' : '1=1', to ? { to } : {})
       .andWhere('o.status != :done', { done: 'DONE' })
       .andWhere('o.dueDate IS NOT NULL')
       .andWhere('o.dueDate < CURRENT_DATE')
