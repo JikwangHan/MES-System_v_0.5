@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Form, Input, Select, Space, Table, Tag, Typography } from 'antd';
+import { Alert, Button, Card, Form, Input, Modal, Select, Space, Table, Tag, Typography } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
@@ -52,6 +52,9 @@ const InventoryListPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [editing, setEditing] = useState<InventoryItem | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchList = async (extra?: any, pageOpts = pagination, companyOverride?: string) => {
     try {
@@ -87,6 +90,7 @@ const InventoryListPage = () => {
     form.resetFields();
     setPagination({ current: 1, pageSize: 10 });
     fetchList({}, { current: 1, pageSize: 10 }, companyCode);
+    setSelectedRowKeys([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyCode]);
 
@@ -94,6 +98,79 @@ const InventoryListPage = () => {
     fetchList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const openModal = (record?: InventoryItem) => {
+    setEditing(record ?? null);
+    setIsModalOpen(true);
+    if (record) {
+      form.setFieldsValue({
+        itemCode: record.itemCode,
+        itemName: record.itemName,
+        warehouse: record.warehouse,
+        location: record.location,
+        qty: record.qty,
+        safetyQty: record.safetyQty,
+        status: record.status,
+      });
+    } else {
+      form.resetFields();
+    }
+  };
+
+  const handleSubmit = async () => {
+    const values = await form.validateFields();
+    const payload: any = {
+      itemCode: values.itemCode,
+      itemName: values.itemName,
+      warehouse: values.warehouse,
+      location: values.location,
+      qty: Number(values.qty) || 0,
+      safetyQty: Number(values.safetyQty) || 0,
+      status: values.status || 'AVAILABLE',
+      companyCode,
+    };
+    try {
+      setLoading(true);
+      if (editing) {
+        await api.patch(`/inventory/${editing.id}`, payload);
+      } else {
+        await api.post('/inventory', payload);
+      }
+      setIsModalOpen(false);
+      setSelectedRowKeys([]);
+      fetchList({}, { current: 1, pageSize: pagination.pageSize });
+    } catch (err: any) {
+      Modal.error({ title: '저장 실패', content: err?.response?.data?.message || '오류가 발생했습니다.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (selectedRowKeys.length === 0) {
+      Modal.warning({ title: '삭제할 항목을 선택하세요.' });
+      return;
+    }
+    const id = Number(selectedRowKeys[0]);
+    Modal.confirm({
+      title: '삭제 확인',
+      content: '선택한 재고를 삭제하시겠습니까?',
+      okText: '삭제',
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          setLoading(true);
+          await api.delete(`/inventory/${id}`);
+          setSelectedRowKeys([]);
+          fetchList({}, { current: 1, pageSize: pagination.pageSize });
+        } catch (err: any) {
+          Modal.error({ title: '삭제 실패', content: err?.response?.data?.message || '오류가 발생했습니다.' });
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
+  };
 
   return (
     <Card title="재고 현황" style={{ width: '100%' }}>
@@ -135,6 +212,7 @@ const InventoryListPage = () => {
               onClick={() => {
                 form.resetFields();
                 setPagination({ current: 1, pageSize: 10 });
+                setSelectedRowKeys([]);
                 fetchList({}, { current: 1, pageSize: 10 });
               }}
             >
@@ -147,8 +225,25 @@ const InventoryListPage = () => {
 
       {error && <Alert style={{ marginBottom: 12 }} type="error" showIcon message={error} />}
 
+      <Space style={{ marginBottom: 8 }}>
+        <Button type="primary" onClick={() => openModal()}>
+          추가
+        </Button>
+        <Button onClick={() => (selectedRowKeys[0] ? openModal(data.find((d) => d.id === selectedRowKeys[0])) : Modal.warning({ title: '수정할 항목을 선택하세요.' }))}>
+          수정
+        </Button>
+        <Button danger onClick={handleDelete}>
+          삭제
+        </Button>
+      </Space>
+
       <Table
         rowKey="id"
+        rowSelection={{
+          type: 'radio',
+          selectedRowKeys,
+          onChange: setSelectedRowKeys,
+        }}
         loading={loading}
         dataSource={data}
         pagination={{
@@ -202,6 +297,43 @@ const InventoryListPage = () => {
           },
         ]}
       />
+
+      <Modal
+        open={isModalOpen}
+        title={editing ? '재고 수정' : '재고 등록'}
+        onOk={handleSubmit}
+        onCancel={() => setIsModalOpen(false)}
+        okText="저장"
+        cancelText="닫기"
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item name="itemCode" label="품목코드" rules={[{ required: true, message: '품목코드를 입력하세요' }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="itemName" label="품목명" rules={[{ required: true, message: '품목명을 입력하세요' }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="warehouse" label="창고">
+            <Input />
+          </Form.Item>
+          <Form.Item name="location" label="로케이션">
+            <Input />
+          </Form.Item>
+          <Form.Item name="qty" label="현재고" rules={[{ required: true, message: '현재고를 입력하세요' }]}>
+            <Input type="number" />
+          </Form.Item>
+          <Form.Item name="safetyQty" label="안전재고">
+            <Input type="number" />
+          </Form.Item>
+          <Form.Item name="status" label="상태" initialValue="AVAILABLE">
+            <Select>
+              <Select.Option value="AVAILABLE">사용</Select.Option>
+              <Select.Option value="LOW">부족</Select.Option>
+              <Select.Option value="HOLD">보류</Select.Option>
+            </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
     </Card>
   );
 };

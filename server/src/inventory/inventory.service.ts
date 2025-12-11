@@ -73,4 +73,49 @@ export class InventoryService {
     const [items, total] = await qb.orderBy('inv.id', 'ASC').skip((page - 1) * pageSize).take(pageSize).getManyAndCount();
     return { items, total };
   }
+
+  async create(user: any, dto: Partial<Inventory> & { companyCode?: string }) {
+    const company = await this.getCompanyForUser(user, dto.companyCode);
+    const inv = this.inventoryRepo.create({
+      itemCode: dto.itemCode!,
+      itemName: dto.itemName!,
+      warehouse: dto.warehouse,
+      location: dto.location,
+      qty: dto.qty ?? 0,
+      safetyQty: dto.safetyQty ?? 0,
+      status: dto.status || 'AVAILABLE',
+      company: company || undefined,
+    });
+    return this.inventoryRepo.save(inv);
+  }
+
+  async update(user: any, id: number, dto: Partial<Inventory> & { companyCode?: string }) {
+    const target = await this.inventoryRepo.findOne({ where: { id }, relations: ['company'] });
+    if (!target) throw new NotFoundException('재고를 찾을 수 없습니다.');
+    if (user.role !== 'SYSTEM_ADMIN') {
+      const c = await this.getCompanyForUser(user);
+      if (!target.company || target.company.id !== c!.id) throw new ForbiddenException('다른 업체 재고는 수정할 수 없습니다.');
+    }
+    Object.assign(target, {
+      itemCode: dto.itemCode ?? target.itemCode,
+      itemName: dto.itemName ?? target.itemName,
+      warehouse: dto.warehouse ?? target.warehouse,
+      location: dto.location ?? target.location,
+      qty: dto.qty ?? target.qty,
+      safetyQty: dto.safetyQty ?? target.safetyQty,
+      status: dto.status ?? target.status,
+    });
+    return this.inventoryRepo.save(target);
+  }
+
+  async remove(user: any, id: number) {
+    const target = await this.inventoryRepo.findOne({ where: { id }, relations: ['company'] });
+    if (!target) throw new NotFoundException('재고를 찾을 수 없습니다.');
+    if (user.role !== 'SYSTEM_ADMIN') {
+      const c = await this.getCompanyForUser(user);
+      if (!target.company || target.company.id !== c!.id) throw new ForbiddenException('다른 업체 재고는 삭제할 수 없습니다.');
+    }
+    await this.inventoryRepo.delete(id);
+    return { success: true };
+  }
 }

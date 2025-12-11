@@ -11,7 +11,11 @@ export class DashboardController {
 
   @Get('summary')
   @Roles('SYSTEM_ADMIN', 'COMPANY_ADMIN', 'USER')
-  async summary(@Req() req: any, @Query('companyCode') companyCode?: string) {
-    return this.dashboardService.summary(req.user, companyCode);
+  async summary(
+    @Req() req: any,
+    @Query('companyCode') companyCode?: string,
+    @Query('period') period?: 'today' | 'week' | 'month',
+  ) {
+    return this.dashboardService.summary(req.user, companyCode, period || 'today');
   }
 }

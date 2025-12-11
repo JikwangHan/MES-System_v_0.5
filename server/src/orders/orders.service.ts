@@ -77,4 +77,62 @@ export class OrdersService {
     const [items, total] = await qb.orderBy('o.id', 'ASC').skip((page - 1) * pageSize).take(pageSize).getManyAndCount();
     return { items, total };
   }
+
+  async create(user: any, dto: Partial<Order> & { companyCode?: string }) {
+    const company = await this.getCompanyForUser(user, dto.companyCode);
+    const exists = await this.orderRepo.findOne({
+      where: {
+        code: dto.code!,
+        ...(company ? { company: { id: company.id } } : {}),
+      },
+    });
+    if (exists) throw new ForbiddenException('동일한 수주코드가 이미 존재합니다.');
+    const order = this.orderRepo.create({
+      code: dto.code!,
+      customerName: dto.customerName,
+      itemCode: dto.itemCode,
+      itemName: dto.itemName,
+      qty: dto.qty ?? 0,
+      dueDate: dto.dueDate,
+      status: dto.status || 'OPEN',
+      company: company || undefined,
+    });
+    return this.orderRepo.save(order);
+  }
+
+  async update(user: any, id: number, dto: Partial<Order> & { companyCode?: string }) {
+    const target = await this.orderRepo.findOne({ where: { id }, relations: ['company'] });
+    if (!target) throw new NotFoundException('수주를 찾을 수 없습니다.');
+    if (user.role !== 'SYSTEM_ADMIN') {
+      const c = await this.getCompanyForUser(user);
+      if (!target.company || target.company.id !== c!.id) throw new ForbiddenException('다른 업체의 수주는 수정할 수 없습니다.');
+    }
+    if (dto.code && dto.code !== target.code) {
+      const exists = await this.orderRepo.findOne({
+        where: { code: dto.code, company: target.company ? { id: target.company.id } : undefined },
+      });
+      if (exists) throw new ForbiddenException('동일한 수주코드가 이미 존재합니다.');
+    }
+    Object.assign(target, {
+      code: dto.code ?? target.code,
+      customerName: dto.customerName ?? target.customerName,
+      itemCode: dto.itemCode ?? target.itemCode,
+      itemName: dto.itemName ?? target.itemName,
+      qty: dto.qty ?? target.qty,
+      dueDate: dto.dueDate ?? target.dueDate,
+      status: dto.status ?? target.status,
+    });
+    return this.orderRepo.save(target);
+  }
+
+  async remove(user: any, id: number) {
+    const target = await this.orderRepo.findOne({ where: { id }, relations: ['company'] });
+    if (!target) throw new NotFoundException('수주를 찾을 수 없습니다.');
+    if (user.role !== 'SYSTEM_ADMIN') {
+      const c = await this.getCompanyForUser(user);
+      if (!target.company || target.company.id !== c!.id) throw new ForbiddenException('다른 업체의 수주는 삭제할 수 없습니다.');
+    }
+    await this.orderRepo.delete(id);
+    return { success: true };
+  }
 }

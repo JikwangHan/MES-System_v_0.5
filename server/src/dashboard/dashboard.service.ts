@@ -6,6 +6,7 @@ import { Order } from '../entities/order.entity';
 import { Inventory } from '../entities/inventory.entity';
 import { Equipment } from '../entities/equipment.entity';
 import { Company } from '../entities/company.entity';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class DashboardService {
@@ -28,17 +29,55 @@ export class DashboardService {
     return company ? { company: { id: company.id } } : {};
   }
 
-  async summary(user: any, companyCode?: string) {
+  async summary(user: any, companyCode?: string, period: 'today' | 'week' | 'month' = 'today') {
     const filter = await this.companyFilter(companyCode);
+
+    // 기간 필터: 오늘/1주/1달
+    const now = dayjs();
+    let from: Date | undefined;
+    if (period === 'today') from = now.startOf('day').toDate();
+    if (period === 'week') from = now.subtract(7, 'day').startOf('day').toDate();
+    if (period === 'month') from = now.subtract(30, 'day').startOf('day').toDate();
+
+    const dateFilter = from ? { ...filter, createdAt: { $gte: from } } : filter;
 
     const [workCnt, orderCnt, eqCnt, lowStockCnt] = await Promise.all([
       this.workRepo.count({ where: filter }),
-      this.orderRepo.count({ where: filter }),
+      this.orderRepo.count({ where: dateFilter as any }),
       this.equipmentRepo.count({ where: filter }),
       this.inventoryRepo.count({ where: { ...filter, status: 'LOW' } }),
     ]);
 
-    // 간단한 최근 주문 5개
+    // 지연 수주(납기 초과)
+    const overdueOrders = await this.orderRepo
+      .createQueryBuilder('o')
+      .leftJoinAndSelect('o.company', 'company')
+      .where(from ? 'o.createdAt >= :from' : '1=1', from ? { from } : {})
+      .andWhere('o.status != :done', { done: 'DONE' })
+      .andWhere('o.dueDate IS NOT NULL')
+      .andWhere('o.dueDate < CURRENT_DATE')
+      .andWhere(filter?.company ? 'o.companyId = :cid' : '1=1', filter?.company ? { cid: (filter as any).company.id } : {})
+      .orderBy('o.dueDate', 'ASC')
+      .limit(5)
+      .getMany();
+
+    // 부족 재고
+    const lowStock = await this.inventoryRepo.find({
+      where: { ...filter, status: 'LOW' },
+      order: { qty: 'ASC' },
+      take: 5,
+      relations: ['company'],
+    });
+
+    // 단순 차트 예시: 기간 내 수주 수
+    const chart = [
+      { name: 'Week1', good: Math.max(orderCnt - 2, 0), defect: 1 },
+      { name: 'Week2', good: orderCnt, defect: 2 },
+      { name: 'Week3', good: Math.max(orderCnt - 1, 0), defect: 1 },
+      { name: 'Week4', good: orderCnt + 1, defect: 0 },
+    ];
+
+    // 최근 수주 5개
     const recentOrders = await this.orderRepo.find({
       where: filter,
       order: { id: 'DESC' },
@@ -46,13 +85,15 @@ export class DashboardService {
       relations: ['company'],
     });
 
-    // 생산/불량 더미 차트 (필요 시 work order 기준으로 확장)
-    const chart = [
-      { name: '월', good: 120, defect: 2 },
-      { name: '화', good: 150, defect: 3 },
-      { name: '수', good: 160, defect: 1 },
-      { name: '목', good: 140, defect: 4 },
-      { name: '금', good: 170, defect: 2 },
+    const alerts = [
+      ...overdueOrders.map((o) => ({
+        type: 'overdue-order',
+        message: `지연 수주: ${o.code} (납기 ${o.dueDate ?? '-'})`,
+      })),
+      ...lowStock.map((i) => ({
+        type: 'low-stock',
+        message: `부족 재고: ${i.itemName} (${i.qty}/${i.safetyQty})`,
+      })),
     ];
 
     return {
@@ -64,6 +105,7 @@ export class DashboardService {
       },
       chart,
       recentOrders,
+      alerts,
     };
   }
 }

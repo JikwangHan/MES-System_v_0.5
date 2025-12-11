@@ -1,4 +1,4 @@
-import { Alert, Button, Card, DatePicker, Form, Input, Select, Space, Table, Tag, Typography } from 'antd';
+import { Alert, Button, Card, DatePicker, Form, Input, Modal, Select, Space, Table, Tag, Typography } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
@@ -60,6 +60,9 @@ const OrderListPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [editing, setEditing] = useState<OrderItem | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchList = async (extra?: any, pageOpts = pagination, companyOverride?: string) => {
     try {
@@ -99,6 +102,7 @@ const OrderListPage = () => {
     form.resetFields();
     setPagination({ current: 1, pageSize: 10 });
     fetchList({}, { current: 1, pageSize: 10 }, companyCode);
+    setSelectedRowKeys([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyCode]);
 
@@ -106,6 +110,77 @@ const OrderListPage = () => {
     fetchList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const openModal = (record?: OrderItem) => {
+    setEditing(record ?? null);
+    setIsModalOpen(true);
+    if (record) {
+      form.setFieldsValue({
+        code: record.code,
+        customerName: record.customerName,
+        itemName: record.itemName,
+        status: record.status,
+        qty: record.qty,
+        dueRange: record.dueDate ? [dayjs(record.dueDate), dayjs(record.dueDate)] : undefined,
+      });
+    } else {
+      form.resetFields();
+    }
+  };
+
+  const handleSubmit = async () => {
+    const values = await form.validateFields();
+    const payload: any = {
+      code: values.code,
+      customerName: values.customerName,
+      itemName: values.itemName,
+      qty: Number(values.qty) || 0,
+      status: values.status || 'OPEN',
+      dueDate: values.dueRange?.[0]?.format('YYYY-MM-DD'),
+      companyCode,
+    };
+    try {
+      setLoading(true);
+      if (editing) {
+        await api.patch(`/orders/${editing.id}`, payload);
+      } else {
+        await api.post('/orders', payload);
+      }
+      setIsModalOpen(false);
+      setSelectedRowKeys([]);
+      fetchList({}, { current: 1, pageSize: pagination.pageSize });
+    } catch (err: any) {
+      Modal.error({ title: '저장 실패', content: err?.response?.data?.message || '오류가 발생했습니다.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (selectedRowKeys.length === 0) {
+      Modal.warning({ title: '삭제할 항목을 선택하세요.' });
+      return;
+    }
+    const id = Number(selectedRowKeys[0]);
+    Modal.confirm({
+      title: '삭제 확인',
+      content: '선택한 수주를 삭제하시겠습니까?',
+      okText: '삭제',
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          setLoading(true);
+          await api.delete(`/orders/${id}`);
+          setSelectedRowKeys([]);
+          fetchList({}, { current: 1, pageSize: pagination.pageSize });
+        } catch (err: any) {
+          Modal.error({ title: '삭제 실패', content: err?.response?.data?.message || '오류가 발생했습니다.' });
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
+  };
 
   return (
     <Card title="수주 내역" style={{ width: '100%' }}>
@@ -152,6 +227,7 @@ const OrderListPage = () => {
               onClick={() => {
                 form.resetFields();
                 setPagination({ current: 1, pageSize: 10 });
+                setSelectedRowKeys([]);
                 fetchList({}, { current: 1, pageSize: 10 });
               }}
             >
@@ -164,8 +240,25 @@ const OrderListPage = () => {
 
       {error && <Alert style={{ marginBottom: 12 }} type="error" showIcon message={error} />}
 
+      <Space style={{ marginBottom: 8 }}>
+        <Button type="primary" onClick={() => openModal()} >
+          추가
+        </Button>
+        <Button onClick={() => (selectedRowKeys[0] ? openModal(data.find((d) => d.id === selectedRowKeys[0])) : Modal.warning({ title: '수정할 항목을 선택하세요.' }))}>
+          수정
+        </Button>
+        <Button danger onClick={handleDelete}>
+          삭제
+        </Button>
+      </Space>
+
       <Table
         rowKey="id"
+        rowSelection={{
+          type: 'radio',
+          selectedRowKeys,
+          onChange: setSelectedRowKeys,
+        }}
         loading={loading}
         dataSource={data}
         pagination={{
@@ -216,6 +309,42 @@ const OrderListPage = () => {
           },
         ]}
       />
+
+      <Modal
+        open={isModalOpen}
+        title={editing ? '수주 수정' : '수주 등록'}
+        onOk={handleSubmit}
+        onCancel={() => setIsModalOpen(false)}
+        okText="저장"
+        cancelText="닫기"
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item name="code" label="수주코드" rules={[{ required: true, message: '수주코드를 입력하세요' }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="customerName" label="고객사">
+            <Input />
+          </Form.Item>
+          <Form.Item name="itemName" label="품목명">
+            <Input />
+          </Form.Item>
+          <Form.Item name="qty" label="수량" rules={[{ required: true, message: '수량을 입력하세요' }]}>
+            <Input type="number" />
+          </Form.Item>
+          <Form.Item name="status" label="상태" initialValue="OPEN">
+            <Select>
+              <Select.Option value="OPEN">접수</Select.Option>
+              <Select.Option value="IN_PROGRESS">진행중</Select.Option>
+              <Select.Option value="DONE">완료</Select.Option>
+              <Select.Option value="HOLD">보류</Select.Option>
+              <Select.Option value="CANCEL">취소</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item name="dueRange" label="납기">
+            <DatePicker.RangePicker allowClear />
+          </Form.Item>
+        </Form>
+      </Modal>
     </Card>
   );
 };

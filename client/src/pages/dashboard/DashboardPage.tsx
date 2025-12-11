@@ -14,13 +14,14 @@ type SummaryResponse = {
 
 const DashboardPage = () => {
   const { companyCode } = useCompanyCode();
+  const [period, setPeriod] = useState<'today' | 'week' | 'month'>('today');
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const loadSummary = async () => {
     try {
       setError(null);
-      const res = await api.get('/dashboard/summary', { params: { companyCode } });
+      const res = await api.get('/dashboard/summary', { params: { companyCode, period } });
       setSummary(res.data);
     } catch (err: any) {
       setError(err?.response?.data?.message || '대시보드 데이터를 불러오지 못했습니다.');
@@ -30,7 +31,7 @@ const DashboardPage = () => {
   useEffect(() => {
     loadSummary();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyCode]);
+  }, [companyCode, period]);
 
   const kpis = summary?.kpis || { workOrders: 0, orders: 0, equipments: 0, lowStock: 0 };
   const chart = summary?.chart || [];
@@ -56,6 +57,17 @@ const DashboardPage = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}>
       {error && <Alert type="error" showIcon message={error} />}
 
+      <Card size="small" style={{ width: '100%' }}>
+        <Space>
+          <Typography.Text>기간</Typography.Text>
+          <Select value={period} onChange={(v) => setPeriod(v)} style={{ width: 140 }}>
+            <Select.Option value="today">오늘</Select.Option>
+            <Select.Option value="week">최근 7일</Select.Option>
+            <Select.Option value="month">최근 30일</Select.Option>
+          </Select>
+        </Space>
+      </Card>
+
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} md={6}>
           <KpiCard title="작업지시" value={kpis.workOrders?.toLocaleString?.() ?? kpis.workOrders} />
@@ -78,6 +90,16 @@ const DashboardPage = () => {
       <Card title="최근 수주 내역" style={{ width: '100%' }}>
         <DataGrid columns={gridColumns} dataSource={recentOrders} pagination={false} />
       </Card>
+
+      {summary?.alerts && summary.alerts.length > 0 && (
+        <Card title="알림" style={{ width: '100%' }}>
+          <ul style={{ paddingLeft: 18, marginBottom: 0 }}>
+            {summary.alerts.map((a, idx) => (
+              <li key={`${a.type}-${idx}`}>{a.message}</li>
+            ))}
+          </ul>
+        </Card>
+      )}
     </div>
   );
 };
