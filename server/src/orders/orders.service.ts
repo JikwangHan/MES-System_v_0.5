@@ -31,20 +31,32 @@ export class OrdersService {
 
   private async seedIfEmpty(): Promise<void> {
     const count = await this.orderRepo.count();
-    if (count > 0) return;
+    // 데이터가 거의 없을 때(30건 미만) 더미 수주를 채워 기간별 집계를 눈으로 확인 가능하게 유지
+    const needsSeed = count < 30;
+    if (!needsSeed) return;
+
     const companies = await this.companyRepo.find();
-    const targets = companies.length > 0 ? companies : [await this.companyRepo.save(this.companyRepo.create({ code: 'DEFAULT', name: '위드윈' }))];
+    const targets =
+      companies.length > 0
+        ? companies
+        : [await this.companyRepo.save(this.companyRepo.create({ code: 'DEFAULT', name: '위드윈' }))];
+
     const statuses = ['OPEN', 'IN_PROGRESS', 'DONE', 'HOLD'];
+    const today = Date.now();
+
     for (const company of targets) {
-      for (let i = 0; i < 8; i += 1) {
+      // 최근 30일 안팎(-15일 ~ +14일)으로 고르게 분포된 30건 더미 생성
+      for (let i = 0; i < 30; i += 1) {
         const idx = i + 1;
+        const offsetDay = i - 15; // -15일 ~ +14일
+        const due = new Date(today + offsetDay * 86400000).toISOString().slice(0, 10);
         const order = this.orderRepo.create({
           code: `ORD-${company.code}-${idx.toString().padStart(3, '0')}`,
           customerName: `고객사${idx}`,
           itemCode: `ITEM-${idx}`,
           itemName: `제품-${idx}`,
-          qty: 100 + idx * 10,
-          dueDate: new Date(Date.now() + idx * 86400000).toISOString().slice(0, 10),
+          qty: 100 + idx * 5,
+          dueDate: due,
           status: statuses[idx % statuses.length],
           company,
         });
