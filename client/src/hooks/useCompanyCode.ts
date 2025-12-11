@@ -19,7 +19,8 @@ export const useCompanyCode = () => {
       // 이미 같은 값이면 상태/이벤트를 발생시키지 않아 무한 루프 방지
       if (prev === code) return prev;
       localStorage.setItem('current_company_code', code);
-      window.dispatchEvent(new Event('company-code-changed'));
+      // 동기 렌더 중 setState 경고 방지를 위해 비동기로 커스텀 이벤트 발행
+      setTimeout(() => window.dispatchEvent(new Event('company-code-changed')), 0);
       return code;
     });
   }, []);
