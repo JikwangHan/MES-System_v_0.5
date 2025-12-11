@@ -30,7 +30,7 @@ export class DashboardService {
   }
 
   // 기간/회사 필터에 맞춰 일자별 수주 건수를 차트 형태로 반환
-  private async buildOrderChart(filter: any, from?: Date) {
+  private async buildOrderChart(filter: any, from?: Date, to?: Date) {
     const qb = this.orderRepo
       .createQueryBuilder('o')
       .select('DATE(o.createdAt)', 'd')
@@ -41,6 +41,9 @@ export class DashboardService {
     }
     if (from) {
       qb.andWhere('o.createdAt >= :from', { from });
+    }
+    if (to) {
+      qb.andWhere('o.createdAt <= :to', { to });
     }
 
     const rows = await qb.groupBy('DATE(o.createdAt)').orderBy('DATE(o.createdAt)', 'ASC').getRawMany();
@@ -59,11 +62,10 @@ export class DashboardService {
     // 기간 필터: 오늘/1주/1달
     const now = dayjs();
     let from: Date | undefined;
+    const to = now.endOf('day').toDate();
     if (period === 'today') from = now.startOf('day').toDate();
     if (period === 'week') from = now.subtract(7, 'day').startOf('day').toDate();
     if (period === 'month') from = now.subtract(30, 'day').startOf('day').toDate();
-
-    const dateFilter = from ? { ...filter, createdAt: { $gte: from } } : filter;
 
     // 회사/기간 필터를 적용한 카운트 계산
     const workQb = this.workRepo.createQueryBuilder('w').leftJoin('w.company', 'c');
@@ -83,6 +85,12 @@ export class DashboardService {
       eqQb.andWhere('e.createdAt >= :from', { from });
       lowStockQb.andWhere('i.createdAt >= :from', { from });
     }
+    if (to) {
+      workQb.andWhere('w.createdAt <= :to', { to });
+      orderQb.andWhere('o.createdAt <= :to', { to });
+      eqQb.andWhere('e.createdAt <= :to', { to });
+      lowStockQb.andWhere('i.createdAt <= :to', { to });
+    }
 
     const [workCnt, orderCnt, eqCnt, lowStockCnt] = await Promise.all([
       workQb.getCount(),
@@ -96,6 +104,7 @@ export class DashboardService {
       .createQueryBuilder('o')
       .leftJoinAndSelect('o.company', 'company')
       .where(from ? 'o.createdAt >= :from' : '1=1', from ? { from } : {})
+      .andWhere(to ? 'o.createdAt <= :to' : '1=1', to ? { to } : {})
       .andWhere('o.status != :done', { done: 'DONE' })
       .andWhere('o.dueDate IS NOT NULL')
       .andWhere('o.dueDate < CURRENT_DATE')
@@ -112,14 +121,6 @@ export class DashboardService {
       relations: ['company'],
     });
 
-    // 단순 차트 예시: 기간 내 수주 수
-    const chart = [
-      { name: 'Week1', good: Math.max(orderCnt - 2, 0), defect: 1 },
-      { name: 'Week2', good: orderCnt, defect: 2 },
-      { name: 'Week3', good: Math.max(orderCnt - 1, 0), defect: 1 },
-      { name: 'Week4', good: orderCnt + 1, defect: 0 },
-    ];
-
     // 최근 수주 5개
     const recentOrders = await this.orderRepo.find({
       where: filter,
@@ -129,7 +130,7 @@ export class DashboardService {
     });
 
     // 기간/회사 필터에 맞는 차트 데이터 생성
-    const chart = await this.buildOrderChart(filter, from);
+    const chart = await this.buildOrderChart(filter, from, to);
 
     const alerts = [
       ...overdueOrders.map((o) => ({
