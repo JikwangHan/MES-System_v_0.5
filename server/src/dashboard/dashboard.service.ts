@@ -29,6 +29,30 @@ export class DashboardService {
     return company ? { company: { id: company.id } } : {};
   }
 
+  // 기간/회사 필터에 맞춰 일자별 수주 건수를 차트 형태로 반환
+  private async buildOrderChart(filter: any, from?: Date) {
+    const qb = this.orderRepo
+      .createQueryBuilder('o')
+      .select('DATE(o.createdAt)', 'd')
+      .addSelect('COUNT(*)', 'cnt');
+
+    if (filter?.company) {
+      qb.where('o.companyId = :cid', { cid: (filter as any).company.id });
+    }
+    if (from) {
+      qb.andWhere('o.createdAt >= :from', { from });
+    }
+
+    const rows = await qb.groupBy('DATE(o.createdAt)').orderBy('DATE(o.createdAt)', 'ASC').getRawMany();
+
+    // Recharts용 데이터로 가공 (good=주문수, defect는 0으로)
+    return rows.map((r: any) => ({
+      name: dayjs(r.d).format('MM-DD'),
+      good: Number(r.cnt) || 0,
+      defect: 0,
+    }));
+  }
+
   async summary(user: any, companyCode?: string, period: 'today' | 'week' | 'month' = 'today') {
     const filter = await this.companyFilter(companyCode);
 
@@ -103,6 +127,9 @@ export class DashboardService {
       take: 5,
       relations: ['company'],
     });
+
+    // 기간/회사 필터에 맞는 차트 데이터 생성
+    const chart = await this.buildOrderChart(filter, from);
 
     const alerts = [
       ...overdueOrders.map((o) => ({
