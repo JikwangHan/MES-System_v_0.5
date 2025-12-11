@@ -90,8 +90,9 @@ const WorkOrdersPage = () => {
       if (targetCompany) {
         params.companyCode = targetCompany;
       }
-      const res = await api.get<WorkOrder[]>('/work/orders', { params });
-      setData(res.data);
+      const res = await api.get('/work/orders', { params });
+      const items = res.data?.items ?? res.data ?? [];
+      setData(items as WorkOrder[]);
     } catch (err: any) {
       setError(err.response?.data?.message || '작업지시를 불러오지 못했습니다.');
     } finally {

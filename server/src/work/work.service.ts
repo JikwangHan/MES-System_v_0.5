@@ -38,7 +38,7 @@ export class WorkService {
     return company;
   }
 
-  async findAll(user: any, filters: any): Promise<WorkOrder[]> {
+  async findAll(user: any, filters: any): Promise<{ items: WorkOrder[]; total: number }> {
     const qb = this.workRepo
       .createQueryBuilder('wo')
       .leftJoinAndSelect('wo.company', 'company');
@@ -58,7 +58,16 @@ export class WorkService {
     if (filters.itemName) qb.andWhere('wo.itemName LIKE :itemName', { itemName: `%${filters.itemName}%` });
     if (filters.dueFrom) qb.andWhere('wo.dueDate >= :dueFrom', { dueFrom: filters.dueFrom });
     if (filters.dueTo) qb.andWhere('wo.dueDate <= :dueTo', { dueTo: filters.dueTo });
-    return qb.orderBy('wo.id', 'ASC').getMany();
+
+    // 페이지네이션 기본값
+    const page = Number(filters.page) > 0 ? Number(filters.page) : 1;
+    const pageSize = Number(filters.pageSize) > 0 ? Number(filters.pageSize) : 10;
+    const [items, total] = await qb
+      .orderBy('wo.id', 'ASC')
+      .skip((page - 1) * pageSize)
+      .take(pageSize)
+      .getManyAndCount();
+    return { items, total };
   }
 
   async create(user: any, dto: CreateWorkOrderDto): Promise<WorkOrder> {

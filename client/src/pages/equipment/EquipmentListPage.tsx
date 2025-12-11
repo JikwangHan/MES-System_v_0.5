@@ -73,8 +73,9 @@ const EquipmentListPage = () => {
       if (targetCompany) {
         params.companyCode = targetCompany;
       }
-      const res = await api.get<Equipment[]>('/equipment', { params });
-      setData(res.data);
+      const res = await api.get('/equipment', { params });
+      const items = res.data?.items ?? res.data ?? [];
+      setData(items as Equipment[]);
     } catch (err: any) {
       setError(err.response?.data?.message || '설비 목록을 불러오지 못했습니다.');
     } finally {

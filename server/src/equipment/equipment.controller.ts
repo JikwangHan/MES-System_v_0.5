@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Req, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { RolesGuard } from '../common/roles.guard';
 import { Roles } from '../common/roles.decorator';
@@ -13,8 +13,8 @@ export class EquipmentController {
   // 설비 목록 조회: 모든 역할이 조회 가능 (자사 데이터만)
   @Get()
   @Roles('SYSTEM_ADMIN', 'COMPANY_ADMIN', 'USER')
-  async list(@Req() req: any) {
-    return this.equipmentService.findAll(req.user);
+  async list(@Req() req: any, @Query() query: any) {
+    return this.equipmentService.findAll(req.user, query);
   }
 
   // 설비 생성: SYSTEM_ADMIN/COMPANY_ADMIN만

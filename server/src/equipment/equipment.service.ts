@@ -41,12 +41,28 @@ export class EquipmentService {
     return company;
   }
 
-  async findAll(user: any): Promise<Equipment[]> {
-    const company = await this.getCompanyForUser(user);
-    return this.equipmentRepo.find({
-      where: { company: { id: company.id } },
-      order: { id: 'ASC' },
-    });
+  async findAll(user: any, filters: any): Promise<{ items: Equipment[]; total: number }> {
+    const qb = this.equipmentRepo
+      .createQueryBuilder('eq')
+      .leftJoinAndSelect('eq.company', 'company');
+
+    if (user.role === 'SYSTEM_ADMIN') {
+      if (filters?.companyCode && filters.companyCode !== 'ALL') {
+        qb.where('company.code = :cc', { cc: filters.companyCode });
+      }
+    } else {
+      const company = await this.getCompanyForUser(user);
+      qb.where('eq.companyId = :cid', { cid: company.id });
+    }
+
+    if (filters?.code) qb.andWhere('eq.code LIKE :code', { code: `%${filters.code}%` });
+    if (filters?.name) qb.andWhere('eq.name LIKE :name', { name: `%${filters.name}%` });
+    if (filters?.status) qb.andWhere('eq.status = :status', { status: filters.status });
+
+    const page = Number(filters.page) > 0 ? Number(filters.page) : 1;
+    const pageSize = Number(filters.pageSize) > 0 ? Number(filters.pageSize) : 10;
+    const [items, total] = await qb.orderBy('eq.id', 'ASC').skip((page - 1) * pageSize).take(pageSize).getManyAndCount();
+    return { items, total };
   }
 
   async create(user: any, dto: CreateEquipmentDto): Promise<Equipment> {
