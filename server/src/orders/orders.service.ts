@@ -31,9 +31,20 @@ export class OrdersService {
 
   private async seedIfEmpty(): Promise<void> {
     const count = await this.orderRepo.count();
-    // 데이터가 거의 없을 때(30건 미만) 더미 수주를 채워 기간별 집계를 눈으로 확인 가능하게 유지
-    const needsSeed = count < 30;
+    // 이미 데이터가 많더라도 날짜가 한두 곳에만 몰려 있으면 기간별 차이가 안 보인다.
+    // 날짜 다양성을 빠르게 체크해 10일 미만이면 재시드(개발용) 한다.
+    const distinctDates = await this.orderRepo
+      .createQueryBuilder('o')
+      .select('COUNT(DISTINCT DATE(COALESCE(o.dueDate, o.createdAt)))', 'cnt')
+      .getRawOne<{ cnt: string }>();
+    const dateSpread = Number(distinctDates?.cnt || 0);
+
+    // 데이터가 거의 없거나(dateSpread<10) 없는 경우 개발 편의를 위해 재시드
+    const needsSeed = count < 30 || dateSpread < 10;
     if (!needsSeed) return;
+
+    // 개발 환경에서만 안전하게 초기화
+    await this.orderRepo.clear();
 
     const companies = await this.companyRepo.find();
     const targets =
