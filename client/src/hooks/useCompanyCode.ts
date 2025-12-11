@@ -15,10 +15,13 @@ export const useCompanyCode = () => {
 
   // 외부에서 회사 코드를 설정하고 이벤트를 발행
   const setCompanyCode = useCallback((code: string) => {
-    setCompanyCodeState(code);
-    localStorage.setItem('current_company_code', code);
-    // 동일 코드로 불필요한 이벤트 중복 발행 방지
-    window.dispatchEvent(new Event('company-code-changed'));
+    setCompanyCodeState((prev) => {
+      // 이미 같은 값이면 상태/이벤트를 발생시키지 않아 무한 루프 방지
+      if (prev === code) return prev;
+      localStorage.setItem('current_company_code', code);
+      window.dispatchEvent(new Event('company-code-changed'));
+      return code;
+    });
   }, []);
 
   // 사용자 정보가 바뀔 때 기본값 정리

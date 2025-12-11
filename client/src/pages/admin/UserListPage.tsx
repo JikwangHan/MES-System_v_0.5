@@ -146,6 +146,15 @@ const UserListPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.role]);
 
+  // SYSTEM_ADMIN이 사용자 관리 화면에 진입할 때 업체를 ALL로 고정
+  useEffect(() => {
+    if (isSystem) {
+      setCompanyCode('ALL');
+      localStorage.setItem('current_company_code', 'ALL');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSystem]);
+
   // 업체 변경 이벤트 감지: SYSTEM_ADMIN이 업체를 바꾸면 검색 초기화 후 재조회
   useEffect(() => {
     const handler = () => {
