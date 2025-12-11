@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Header, Query, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { RolesGuard } from '../common/roles.guard';
 import { Roles } from '../common/roles.decorator';
@@ -11,6 +11,7 @@ export class DashboardController {
 
   @Get('summary')
   @Roles('SYSTEM_ADMIN', 'COMPANY_ADMIN', 'USER')
+  @Header('Cache-Control', 'no-store')
   async summary(
     @Req() req: any,
     @Query('companyCode') companyCode?: string,

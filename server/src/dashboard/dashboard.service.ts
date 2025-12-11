@@ -160,6 +160,13 @@ export class DashboardService {
       chart,
       recentOrders,
       alerts,
+      meta: {
+        period,
+        from: from ?? null,
+        to: to ?? null,
+        chartLength: chart.length,
+        companyCode: companyCode ?? (filter?.company ? filter.company.id : 'ALL'),
+      },
     };
   }
 }
