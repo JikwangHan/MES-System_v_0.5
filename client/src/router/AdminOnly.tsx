@@ -10,20 +10,21 @@ import { useAuth } from '../context/AuthContext';
  */
 type Props = {
   children: React.ReactNode;
+  allowedRoles?: string[];
 };
 
-export const AdminOnly = ({ children }: Props) => {
+export const AdminOnly = ({ children, allowedRoles = ['SYSTEM_ADMIN'] }: Props) => {
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
   const [blocked, setBlocked] = useState(false);
 
   useEffect(() => {
-    if (user && user.role !== 'SYSTEM_ADMIN') {
+    if (user && !allowedRoles.includes(user.role)) {
       setBlocked(true);
     } else {
       setBlocked(false);
     }
-  }, [user]);
+  }, [user, allowedRoles]);
 
   // 아직 사용자 정보 로딩 중이면 아무것도 렌더하지 않음
   if (loading) return null;

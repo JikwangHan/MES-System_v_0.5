@@ -85,7 +85,7 @@ const AppRouter = () => {
               path="admin/users"
               element={
                 <Suspense fallback={<div style={{ padding: 24 }}>Loading...</div>}>
-                  <AdminOnly>
+                  <AdminOnly allowedRoles={['SYSTEM_ADMIN', 'COMPANY_ADMIN']}>
                     <UserListPage />
                   </AdminOnly>
                 </Suspense>
