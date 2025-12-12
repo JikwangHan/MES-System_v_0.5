@@ -142,7 +142,8 @@ const UserListPage = () => {
       return;
     }
     if (isSystem) fetchCompanies();
-    if (isSystem || isCompanyAdmin) fetchUsers();
+    // COMPANY_ADMIN은 자신의 업체 고정이므로 여기서 바로 조회
+    if (isCompanyAdmin) fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.role]);
 
@@ -155,32 +156,22 @@ const UserListPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSystem]);
 
-  // 업체 변경 이벤트 감지: SYSTEM_ADMIN이 업체를 바꾸면 검색 초기화 후 재조회
+  // companyCode가 바뀔 때마다 검색 초기화 후 재조회 (SYSTEM_ADMIN 전용)
   useEffect(() => {
-    const handler = () => {
-      const code = localStorage.getItem('current_company_code') || 'ALL';
-      // 검색/페이지/데이터 초기화
-      searchForm.resetFields();
-      searchForm.setFieldsValue({
-        username: undefined,
-        displayName: undefined,
-        role: undefined,
-        isActive: undefined,
-        companyCode: code === 'ALL' ? undefined : code,
-      });
-      setSearch(code === 'ALL' ? {} : { companyCode: code });
-      setTableKey((prev) => prev + 1);
-      fetchUsers(code === 'ALL' ? {} : { companyCode: code }, code);
-    };
-    window.addEventListener('company-code-changed', handler);
-    window.addEventListener('storage', handler);
-    handler();
-    return () => {
-      window.removeEventListener('company-code-changed', handler);
-      window.removeEventListener('storage', handler);
-    };
+    if (!isSystem) return;
+    searchForm.resetFields();
+    searchForm.setFieldsValue({
+      username: undefined,
+      displayName: undefined,
+      role: undefined,
+      isActive: undefined,
+      companyCode: companyCode === 'ALL' ? undefined : companyCode,
+    });
+    setSearch(companyCode === 'ALL' ? {} : { companyCode });
+    setTableKey((prev) => prev + 1);
+    fetchUsers(companyCode === 'ALL' ? {} : { companyCode }, companyCode);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSystem]);
+  }, [companyCode, isSystem]);
 
   const openCreate = () => {
     setModalMode('create');
