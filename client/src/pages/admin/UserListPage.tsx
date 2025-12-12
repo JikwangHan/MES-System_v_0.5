@@ -68,6 +68,7 @@ const UserListPage = () => {
   const isSystem = user?.role === 'SYSTEM_ADMIN';
   const isCompanyAdmin = user?.role === 'COMPANY_ADMIN';
   const [tableKey, setTableKey] = useState<number>(0);
+  const [initialized, setInitialized] = useState(false);
 
   const [data, setData] = useState<User[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -142,29 +143,30 @@ const UserListPage = () => {
       });
       return;
     }
-    if (isSystem) fetchCompanies();
-    // COMPANY_ADMIN은 자신의 업체 고정이므로 여기서 바로 조회
-    if (isCompanyAdmin) fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.role]);
-
-  // SYSTEM_ADMIN이 사용자 관리 화면에 진입할 때 업체를 ALL로 고정
-  useEffect(() => {
     if (isSystem) {
-      setCompanyCode('ALL');
-      localStorage.setItem('current_company_code', 'ALL');
-      // 즉시 검색조건 초기화 후 전체 조회
+      fetchCompanies();
+      // SYSTEM_ADMIN 진입 시 즉시 ALL로 고정하고 초기화 + 전체 조회
+      const code = 'ALL';
+      setCompanyCode(code);
+      localStorage.setItem('current_company_code', code);
       searchForm.resetFields();
       setSearch({});
       setTableKey((prev) => prev + 1);
-      fetchUsers({}, 'ALL');
+      fetchUsers({}, code);
+      setInitialized(true);
+    }
+    // COMPANY_ADMIN은 자신의 업체 고정이므로 여기서 바로 조회
+    if (isCompanyAdmin) {
+      fetchUsers();
+      setInitialized(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSystem]);
+  }, [user?.role]);
 
-  // companyCode가 바뀔 때마다 검색 초기화 후 재조회 (SYSTEM_ADMIN 전용)
+  // companyCode가 바뀔 때마다 검색 초기화 후 재조회 (SYSTEM_ADMIN 전용, 초기화 이후만)
   useEffect(() => {
     if (!isSystem) return;
+    if (!initialized) return;
     searchForm.resetFields();
     searchForm.setFieldsValue({
       username: undefined,
