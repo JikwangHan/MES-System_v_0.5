@@ -218,24 +218,22 @@ const OrderListPage = () => {
         <Form.Item name="dueRange" label="납기">
           <DatePicker.RangePicker allowClear />
         </Form.Item>
-        <Form.Item>
-          <Space>
-            <Button type="primary" htmlType="submit">
-              검색
-            </Button>
-            <Button
-              onClick={() => {
-                form.resetFields();
-                setPagination({ current: 1, pageSize: 10 });
-                setSelectedRowKeys([]);
-                fetchList({}, { current: 1, pageSize: 10 });
-              }}
-            >
-              초기화
-            </Button>
-            <Button onClick={() => fetchList()}>새로고침</Button>
-          </Space>
-        </Form.Item>
+        <div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end', gap: 8 }}>
+          <Button type="primary" htmlType="submit">
+            검색
+          </Button>
+          <Button onClick={() => fetchList()}>새로고침</Button>
+          <Button
+            onClick={() => {
+              form.resetFields();
+              setPagination({ current: 1, pageSize: 10 });
+              setSelectedRowKeys([]);
+              fetchList({}, { current: 1, pageSize: 10 });
+            }}
+          >
+            초기화
+          </Button>
+        </div>
       </Form>
 
       {error && <Alert style={{ marginBottom: 12 }} type="error" showIcon message={error} />}

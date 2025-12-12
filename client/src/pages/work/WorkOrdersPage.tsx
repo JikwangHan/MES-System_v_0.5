@@ -164,22 +164,20 @@ const WorkOrdersPage = () => {
           <Form.Item name="dueRange" label="납기">
             <DatePicker.RangePicker allowClear />
           </Form.Item>
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit">검색</Button>
-              <Button
-                onClick={() => {
-                  form.resetFields();
-                  form.setFieldsValue({ code: undefined, itemName: undefined, status: undefined, dueRange: undefined });
-                  setSearch({});
-                  fetchList({});
-                }}
-              >
-                초기화
-              </Button>
-              <Button onClick={() => fetchList(search)}>새로고침</Button>
-            </Space>
-          </Form.Item>
+          <div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end', gap: 8 }}>
+            <Button type="primary" htmlType="submit">검색</Button>
+            <Button onClick={() => fetchList(search)}>새로고침</Button>
+            <Button
+              onClick={() => {
+                form.resetFields();
+                form.setFieldsValue({ code: undefined, itemName: undefined, status: undefined, dueRange: undefined });
+                setSearch({});
+                fetchList({});
+              }}
+            >
+              초기화
+            </Button>
+          </div>
         </Form>
 
         {error && <Alert style={{ marginBottom: 12 }} type="error" showIcon message={error} />}
