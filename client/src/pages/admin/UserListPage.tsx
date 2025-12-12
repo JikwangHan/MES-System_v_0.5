@@ -306,17 +306,20 @@ const UserListPage = () => {
             </Select>
           </Form.Item>
         )}
-        <div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end', gap: 8 }}>
-          {isSystem && (
-            <Button type="primary" onClick={openCreate}>사용자 추가</Button>
-          )}
-          <Button onClick={() => fetchUsers()}>새로고침</Button>
-          <Button type="primary" htmlType="submit" form="userSearchForm">검색</Button>
-          <Button
-            onClick={() => {
-              searchForm.resetFields();
-              searchForm.setFieldsValue({
-                username: undefined,
+        <div style={{ display: 'flex', flex: 1, justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {isSystem && (
+              <Button type="primary" onClick={openCreate} style={{ minWidth: 96 }}>사용자 추가</Button>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <Button type="primary" htmlType="submit" form="userSearchForm" style={{ minWidth: 96 }}>검색</Button>
+            <Button onClick={() => fetchUsers()} style={{ minWidth: 96 }}>새로고침</Button>
+            <Button
+              onClick={() => {
+                searchForm.resetFields();
+                searchForm.setFieldsValue({
+                  username: undefined,
                 displayName: undefined,
                 role: undefined,
                 isActive: undefined,
@@ -326,9 +329,11 @@ const UserListPage = () => {
               setSearch(empty);
               fetchUsers(empty);
             }}
+            style={{ minWidth: 96 }}
           >
             초기화
           </Button>
+          </div>
         </div>
       </Form>
 
@@ -395,14 +400,12 @@ const UserListPage = () => {
             render: (_: any, record: User) => (
               <Space>
                 <Button
-                  size="small"
                   onClick={() => openEdit(record)}
                   disabled={!isSystem}
                 >
                   수정
                 </Button>
                 <Button
-                  size="small"
                   type="primary"
                   disabled={!isSystem || record.isLocked === false}
                   onClick={() => handleUnlock(record.id)}

@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Form, Input, Modal, Select, Space, Table, Tag, Typography } from 'antd';
+import { Alert, Button, Card, Form, Input, Modal, Select, Table, Tag, Typography } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
@@ -204,10 +204,12 @@ const InventoryListPage = () => {
           </Select>
         </Form.Item>
         <div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end', gap: 8 }}>
-          <Button type="primary" htmlType="submit">
+          <Button type="primary" htmlType="submit" style={{ minWidth: 96, height: 32 }}>
             검색
           </Button>
-          <Button onClick={() => fetchList()}>새로고침</Button>
+          <Button onClick={() => fetchList()} style={{ minWidth: 96, height: 32 }}>
+            새로고침
+          </Button>
           <Button
             onClick={() => {
               form.resetFields();
@@ -215,6 +217,7 @@ const InventoryListPage = () => {
               setSelectedRowKeys([]);
               fetchList({}, { current: 1, pageSize: 10 });
             }}
+            style={{ minWidth: 96, height: 32 }}
           >
             초기화
           </Button>
@@ -224,10 +227,11 @@ const InventoryListPage = () => {
       {error && <Alert style={{ marginBottom: 12 }} type="error" showIcon message={error} />}
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, gap: 8, flexWrap: 'wrap' }}>
-        <Button type="primary" onClick={() => openModal()}>
+        <Button type="primary" onClick={() => openModal()} style={{ minWidth: 96, height: 32 }}>
           추가
         </Button>
         <Button
+          style={{ minWidth: 96, height: 32 }}
           onClick={() =>
             selectedRowKeys[0]
               ? openModal(data.find((d) => d.id === selectedRowKeys[0]))
@@ -236,7 +240,7 @@ const InventoryListPage = () => {
         >
           수정
         </Button>
-        <Button danger onClick={handleDelete}>
+        <Button danger onClick={handleDelete} style={{ minWidth: 96, height: 32 }}>
           삭제
         </Button>
       </div>

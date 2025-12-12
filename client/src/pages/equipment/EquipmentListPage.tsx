@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Form, Input, Select, Space, Table, Tag, Typography } from 'antd';
+import { Alert, Button, Card, Form, Input, Select, Table, Tag, Typography } from 'antd';
 import dayjs from 'dayjs';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
@@ -137,14 +137,19 @@ const EquipmentListPage = () => {
             </Select>
           </Form.Item>
           <div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end', gap: 8 }}>
-            <Button type="primary" htmlType="submit">검색</Button>
-            <Button onClick={() => fetchList(search)}>새로고침</Button>
+            <Button type="primary" htmlType="submit" style={{ minWidth: 96, height: 32 }}>검색</Button>
+            <Button onClick={() => fetchList(search)} style={{ minWidth: 96, height: 32 }}>새로고침</Button>
             <Button
               onClick={() => {
                 form.resetFields();
-                setSearch({});
-                fetchList({});
+                form.setFieldsValue({ code: undefined, name: undefined, status: undefined });
+                const empty = {};
+                setSearch(empty);
+                setData([]);
+                setTableKey((prev) => prev + 1); // 테이블/페이지 초기화
+                fetchList(empty, companyCode);
               }}
+              style={{ minWidth: 96, height: 32 }}
             >
               초기화
             </Button>

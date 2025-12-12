@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Form, Input, Select, Space, Table, Tag, Typography, DatePicker } from 'antd';
+import { Alert, Button, Card, Form, Input, Select, Table, Tag, Typography, DatePicker } from 'antd';
 import dayjs from 'dayjs';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
@@ -165,8 +165,12 @@ const WorkOrdersPage = () => {
             <DatePicker.RangePicker allowClear />
           </Form.Item>
           <div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end', gap: 8 }}>
-            <Button type="primary" htmlType="submit">검색</Button>
-            <Button onClick={() => fetchList(search)}>새로고침</Button>
+            <Button type="primary" htmlType="submit" style={{ minWidth: 96, height: 32 }}>
+              검색
+            </Button>
+            <Button onClick={() => fetchList(search)} style={{ minWidth: 96, height: 32 }}>
+              새로고침
+            </Button>
             <Button
               onClick={() => {
                 form.resetFields();
@@ -174,6 +178,7 @@ const WorkOrdersPage = () => {
                 setSearch({});
                 fetchList({});
               }}
+              style={{ minWidth: 96, height: 32 }}
             >
               초기화
             </Button>

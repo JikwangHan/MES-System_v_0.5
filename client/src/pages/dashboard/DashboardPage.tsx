@@ -10,6 +10,7 @@ type SummaryResponse = {
   kpis: { workOrders: number; orders: number; equipments: number; lowStock: number };
   chart: Array<{ name: string; good: number; defect: number }>;
   recentOrders: Array<{ id: number; code: string; itemName?: string; qty?: number; dueDate?: string; status?: string }>;
+  alerts?: Array<{ type: string; message: string }>;
 };
 
 const DashboardPage = () => {

@@ -243,12 +243,14 @@ const CompanyListPage = () => {
       </Form>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Button type="primary" onClick={openCreate}>업체 추가</Button>
-          <Button onClick={fetchCompanies}>새로고침</Button>
+          <Button type="primary" onClick={openCreate} style={{ minWidth: 96 }}>업체 추가</Button>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Button type="primary" htmlType="submit" form="companySearchForm">
+          <Button type="primary" htmlType="submit" form="companySearchForm" style={{ minWidth: 96 }}>
             검색
+          </Button>
+          <Button onClick={fetchCompanies} style={{ minWidth: 96 }}>
+            새로고침
           </Button>
           <Button
             onClick={() => {
@@ -262,6 +264,7 @@ const CompanyListPage = () => {
               setSearch(empty);
               fetchCompanies();
             }}
+            style={{ minWidth: 96 }}
           >
             초기화
           </Button>
@@ -315,14 +318,13 @@ const CompanyListPage = () => {
             render: (_: any, record: Company) => (
               <Space>
                 <Button
-                  size="small"
                   onClick={() => openEdit(record)}
                   disabled={record.status === 'SUSPENDED'} // 삭제(사용정지) 상태면 수정 비활성화
                 >
                   수정
                 </Button>
                 {record.status === 'SUSPENDED' ? (
-                  <Button size="small" type="primary" onClick={() => handleRestore(record.id)}>
+                  <Button type="primary" onClick={() => handleRestore(record.id)}>
                     사용
                   </Button>
                 ) : (
@@ -334,7 +336,6 @@ const CompanyListPage = () => {
                     cancelText="아니오"
                   >
                     <Button
-                      size="small"
                       danger
                       // ACTIVE, INACTIVE에서는 삭제 가능, SUSPENDED에서는 비활성
                       disabled={record.status === 'SUSPENDED'}
