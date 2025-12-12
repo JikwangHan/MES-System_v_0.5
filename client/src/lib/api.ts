@@ -32,6 +32,11 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error?.response?.status;
+    const reqUrl = error?.config?.url || '';
+    // 로그인/회원가입 요청에서의 401은 전역 처리하지 않고 호출한 화면에서 메시지 표시
+    if (status === 401 && (reqUrl.includes('/auth/login') || reqUrl.includes('/auth/signup'))) {
+      return Promise.reject(error);
+    }
     if (status === 401 || status === 403) {
       // 이미 처리 중이면 중복 실행 방지
       if (!isAuthRedirecting) {
