@@ -122,6 +122,7 @@ const UserListPage = () => {
     }
   };
 
+  // 접근 권한 체크 및 기본 조회
   useEffect(() => {
     if (!isSystem && !isCompanyAdmin) {
       const handleClose = () => {
@@ -152,6 +153,11 @@ const UserListPage = () => {
     if (isSystem) {
       setCompanyCode('ALL');
       localStorage.setItem('current_company_code', 'ALL');
+      // 즉시 검색조건 초기화 후 전체 조회
+      searchForm.resetFields();
+      setSearch({});
+      setTableKey((prev) => prev + 1);
+      fetchUsers({}, 'ALL');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSystem]);
