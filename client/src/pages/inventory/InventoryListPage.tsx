@@ -225,17 +225,23 @@ const InventoryListPage = () => {
 
       {error && <Alert style={{ marginBottom: 12 }} type="error" showIcon message={error} />}
 
-      <Space style={{ marginBottom: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, gap: 8, flexWrap: 'wrap' }}>
         <Button type="primary" onClick={() => openModal()}>
           추가
         </Button>
-        <Button onClick={() => (selectedRowKeys[0] ? openModal(data.find((d) => d.id === selectedRowKeys[0])) : Modal.warning({ title: '수정할 항목을 선택하세요.' }))}>
+        <Button
+          onClick={() =>
+            selectedRowKeys[0]
+              ? openModal(data.find((d) => d.id === selectedRowKeys[0]))
+              : Modal.warning({ title: '수정할 항목을 선택하세요.' })
+          }
+        >
           수정
         </Button>
         <Button danger onClick={handleDelete}>
           삭제
         </Button>
-      </Space>
+      </div>
 
       <Table
         rowKey="id"
