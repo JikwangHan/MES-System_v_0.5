@@ -274,7 +274,7 @@ const UserListPage = () => {
         layout="inline"
         initialValues={search}
         onFinish={(values) => { setSearch(values); fetchUsers(values); }}
-        style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}
+        style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12, alignItems: 'flex-start' }}
       >
         <Form.Item name="username" label="아이디">
           <Input allowClear placeholder="아이디" />
@@ -306,17 +306,11 @@ const UserListPage = () => {
             </Select>
           </Form.Item>
         )}
-      </Form>
-
-      {/* 버튼 배치: 왼쪽(사용자 추가/새로고침), 오른쪽(검색/초기화) */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end', gap: 8 }}>
           {isSystem && (
             <Button type="primary" onClick={openCreate}>사용자 추가</Button>
           )}
           <Button onClick={() => fetchUsers()}>새로고침</Button>
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <Button type="primary" htmlType="submit" form="userSearchForm">검색</Button>
           <Button
             onClick={() => {
@@ -336,7 +330,7 @@ const UserListPage = () => {
             초기화
           </Button>
         </div>
-      </div>
+      </Form>
 
       {error && (
         <Alert

@@ -136,21 +136,19 @@ const EquipmentListPage = () => {
               <Select.Option value="MAINT">정비</Select.Option>
             </Select>
           </Form.Item>
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit">검색</Button>
-              <Button
-                onClick={() => {
-                  form.resetFields();
-                  setSearch({});
-                  fetchList({});
-                }}
-              >
-                초기화
-              </Button>
-              <Button onClick={() => fetchList(search)}>새로고침</Button>
-            </Space>
-          </Form.Item>
+          <div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end', gap: 8 }}>
+            <Button type="primary" htmlType="submit">검색</Button>
+            <Button onClick={() => fetchList(search)}>새로고침</Button>
+            <Button
+              onClick={() => {
+                form.resetFields();
+                setSearch({});
+                fetchList({});
+              }}
+            >
+              초기화
+            </Button>
+          </div>
         </Form>
 
         {error && (
