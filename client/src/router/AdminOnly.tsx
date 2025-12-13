@@ -18,6 +18,7 @@ export const AdminOnly = ({ children, allowedRoles = ['SYSTEM_ADMIN'] }: Props) 
   const navigate = useNavigate();
   const [blocked, setBlocked] = useState(false);
   const shownRef = useRef(false);
+  const handlingRef = useRef(false);
 
   useEffect(() => {
     if (user && !allowedRoles.includes(user.role)) {
@@ -33,16 +34,21 @@ export const AdminOnly = ({ children, allowedRoles = ['SYSTEM_ADMIN'] }: Props) 
   useEffect(() => {
     if (!blocked) {
       shownRef.current = false;
+      handlingRef.current = false;
       return;
     }
     if (shownRef.current) return;
     shownRef.current = true;
     const handleClose = () => {
+      if (handlingRef.current) return;
+      handlingRef.current = true;
+      Modal.destroyAll();
       localStorage.removeItem('access_token');
       localStorage.removeItem('current_company_code');
       logout();
       navigate('/', { replace: true });
     };
+    Modal.destroyAll();
     Modal.warning({
       title: '접근 권한이 없습니다!',
       content: '관리자에게 문의하세요.',
@@ -52,7 +58,6 @@ export const AdminOnly = ({ children, allowedRoles = ['SYSTEM_ADMIN'] }: Props) 
       closable: false,
       onOk: handleClose,
       onCancel: handleClose,
-      afterClose: handleClose,
     });
   }, [blocked, logout, navigate]);
 
