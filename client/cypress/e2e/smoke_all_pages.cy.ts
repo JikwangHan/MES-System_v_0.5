@@ -19,6 +19,7 @@ describe('주요 화면 스모크 테스트 (ADMIN)', () => {
   it('대시보드/수주/재고/작업지시/설비/업체/사용자 화면 열람', () => {
     cy.visit('/app/dashboard');
     cy.contains('대시보드', { matchCase: false }).should('exist');
+    cy.contains('기간').should('exist');
 
     cy.visit('/app/orders');
     cy.contains('수주 내역').should('exist');
@@ -37,5 +38,9 @@ describe('주요 화면 스모크 테스트 (ADMIN)', () => {
 
     cy.visit('/app/admin/users');
     cy.contains('사용자 관리').should('exist');
+
+    cy.visit('/app/profile');
+    cy.contains('내 정보').should('exist');
+    cy.contains('업체명').should('exist');
   });
 });
