@@ -188,26 +188,26 @@ const InventoryListPage = () => {
         style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}
       >
         <Form.Item name="itemCode" label="품목코드">
-          <Input allowClear placeholder="품목코드" />
+          <Input allowClear placeholder="품목코드" data-testid="inv-itemcode-input" />
         </Form.Item>
         <Form.Item name="itemName" label="품목명">
-          <Input allowClear placeholder="품목명" />
+          <Input allowClear placeholder="품목명" data-testid="inv-itemname-input" />
         </Form.Item>
         <Form.Item name="warehouse" label="창고">
-          <Input allowClear placeholder="창고" />
+          <Input allowClear placeholder="창고" data-testid="inv-warehouse-input" />
         </Form.Item>
         <Form.Item name="status" label="상태">
-          <Select allowClear style={{ width: 140 }} placeholder="상태 선택">
+          <Select allowClear style={{ width: 140 }} placeholder="상태 선택" data-testid="inv-status-select">
             <Select.Option value="AVAILABLE">사용</Select.Option>
             <Select.Option value="LOW">부족</Select.Option>
             <Select.Option value="HOLD">보류</Select.Option>
           </Select>
         </Form.Item>
         <div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end', gap: 8 }}>
-          <Button type="primary" htmlType="submit" style={{ minWidth: 96, height: 32 }}>
+          <Button type="primary" htmlType="submit" style={{ minWidth: 96, height: 32 }} data-testid="inv-search-btn">
             검색
           </Button>
-          <Button onClick={() => fetchList()} style={{ minWidth: 96, height: 32 }}>
+          <Button onClick={() => fetchList()} style={{ minWidth: 96, height: 32 }} data-testid="inv-refresh-btn">
             새로고침
           </Button>
           <Button
@@ -218,6 +218,7 @@ const InventoryListPage = () => {
               fetchList({}, { current: 1, pageSize: 10 });
             }}
             style={{ minWidth: 96, height: 32 }}
+            data-testid="inv-reset-btn"
           >
             초기화
           </Button>
@@ -227,11 +228,12 @@ const InventoryListPage = () => {
       {error && <Alert style={{ marginBottom: 12 }} type="error" showIcon message={error} />}
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, gap: 8, flexWrap: 'wrap' }}>
-        <Button type="primary" onClick={() => openModal()} style={{ minWidth: 96, height: 32 }}>
+        <Button type="primary" onClick={() => openModal()} style={{ minWidth: 96, height: 32 }} data-testid="inv-add-btn">
           추가
         </Button>
         <Button
           style={{ minWidth: 96, height: 32 }}
+          data-testid="inv-edit-btn"
           onClick={() =>
             selectedRowKeys[0]
               ? openModal(data.find((d) => d.id === selectedRowKeys[0]))
@@ -240,7 +242,7 @@ const InventoryListPage = () => {
         >
           수정
         </Button>
-        <Button danger onClick={handleDelete} style={{ minWidth: 96, height: 32 }}>
+        <Button danger onClick={handleDelete} style={{ minWidth: 96, height: 32 }} data-testid="inv-delete-btn">
           삭제
         </Button>
       </div>

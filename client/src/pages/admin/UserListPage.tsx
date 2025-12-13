@@ -277,27 +277,27 @@ const UserListPage = () => {
         style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12, alignItems: 'flex-start' }}
       >
         <Form.Item name="username" label="아이디">
-          <Input allowClear placeholder="아이디" />
+          <Input allowClear placeholder="아이디" data-testid="user-username-input" />
         </Form.Item>
         <Form.Item name="displayName" label="이름">
-          <Input allowClear placeholder="이름" />
+          <Input allowClear placeholder="이름" data-testid="user-displayname-input" />
         </Form.Item>
         <Form.Item name="role" label="역할">
-          <Select allowClear style={{ width: 160 }} placeholder="역할 선택">
+          <Select allowClear style={{ width: 160 }} placeholder="역할 선택" data-testid="user-role-select">
             <Select.Option value="SYSTEM_ADMIN">시스템 관리자</Select.Option>
             <Select.Option value="COMPANY_ADMIN">업체 관리자</Select.Option>
             <Select.Option value="USER">사용자</Select.Option>
           </Select>
         </Form.Item>
         <Form.Item name="isActive" label="상태">
-          <Select allowClear style={{ width: 140 }} placeholder="상태 선택">
+          <Select allowClear style={{ width: 140 }} placeholder="상태 선택" data-testid="user-status-select">
             <Select.Option value="true">사용</Select.Option>
             <Select.Option value="false">사용정지</Select.Option>
           </Select>
         </Form.Item>
         {isSystem && (
           <Form.Item name="companyCode" label="업체">
-            <Select allowClear style={{ width: 160 }} placeholder="업체 선택">
+            <Select allowClear style={{ width: 160 }} placeholder="업체 선택" data-testid="user-company-select">
               {companies.map((c) => (
                 <Select.Option key={c.code} value={c.code}>
                   {c.name} ({c.code})
@@ -309,12 +309,12 @@ const UserListPage = () => {
         <div style={{ display: 'flex', flex: 1, justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {isSystem && (
-              <Button type="primary" onClick={openCreate} style={{ minWidth: 96 }}>사용자 추가</Button>
+              <Button type="primary" onClick={openCreate} style={{ minWidth: 96 }} data-testid="user-add-btn">사용자 추가</Button>
             )}
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            <Button type="primary" htmlType="submit" form="userSearchForm" style={{ minWidth: 96 }}>검색</Button>
-            <Button onClick={() => fetchUsers()} style={{ minWidth: 96 }}>새로고침</Button>
+            <Button type="primary" htmlType="submit" form="userSearchForm" style={{ minWidth: 96 }} data-testid="user-search-btn">검색</Button>
+            <Button onClick={() => fetchUsers()} style={{ minWidth: 96 }} data-testid="user-refresh-btn">새로고침</Button>
             <Button
               onClick={() => {
                 searchForm.resetFields();
@@ -330,6 +330,7 @@ const UserListPage = () => {
               fetchUsers(empty);
             }}
             style={{ minWidth: 96 }}
+            data-testid="user-reset-btn"
           >
             초기화
           </Button>

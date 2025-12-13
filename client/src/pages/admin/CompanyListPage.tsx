@@ -228,13 +228,13 @@ const CompanyListPage = () => {
         style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}
       >
         <Form.Item name="code" label="업체코드">
-          <Input allowClear placeholder="예: DEFAULT" />
+          <Input allowClear placeholder="예: DEFAULT" data-testid="company-code-input" />
         </Form.Item>
         <Form.Item name="name" label="업체명">
-          <Input allowClear placeholder="업체명" />
+          <Input allowClear placeholder="업체명" data-testid="company-name-input" />
         </Form.Item>
         <Form.Item name="status" label="상태">
-          <Select allowClear style={{ width: 140 }} placeholder="상태 선택">
+          <Select allowClear style={{ width: 140 }} placeholder="상태 선택" data-testid="company-status-select">
             <Select.Option value="ACTIVE">사용 중</Select.Option>
             <Select.Option value="INACTIVE">사용정지</Select.Option>
             <Select.Option value="SUSPENDED">삭제(사용정지)</Select.Option>
@@ -243,13 +243,13 @@ const CompanyListPage = () => {
       </Form>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Button type="primary" onClick={openCreate} style={{ minWidth: 96 }}>업체 추가</Button>
+          <Button type="primary" onClick={openCreate} style={{ minWidth: 96 }} data-testid="company-add-btn">업체 추가</Button>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Button type="primary" htmlType="submit" form="companySearchForm" style={{ minWidth: 96 }}>
+          <Button type="primary" htmlType="submit" form="companySearchForm" style={{ minWidth: 96 }} data-testid="company-search-btn">
             검색
           </Button>
-          <Button onClick={fetchCompanies} style={{ minWidth: 96 }}>
+          <Button onClick={fetchCompanies} style={{ minWidth: 96 }} data-testid="company-refresh-btn">
             새로고침
           </Button>
           <Button
@@ -265,6 +265,7 @@ const CompanyListPage = () => {
               fetchCompanies();
             }}
             style={{ minWidth: 96 }}
+            data-testid="company-reset-btn"
           >
             초기화
           </Button>

@@ -147,13 +147,13 @@ const WorkOrdersPage = () => {
           style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}
         >
           <Form.Item name="code" label="지시코드">
-            <Input allowClear placeholder="작업지시 코드" />
+            <Input allowClear placeholder="작업지시 코드" data-testid="work-code-input" />
           </Form.Item>
           <Form.Item name="itemName" label="품목명">
-            <Input allowClear placeholder="품목명" />
+            <Input allowClear placeholder="품목명" data-testid="work-item-input" />
           </Form.Item>
           <Form.Item name="status" label="상태">
-            <Select allowClear style={{ width: 160 }} placeholder="상태 선택">
+            <Select allowClear style={{ width: 160 }} placeholder="상태 선택" data-testid="work-status-select">
               <Select.Option value="PLANNED">계획</Select.Option>
               <Select.Option value="IN_PROGRESS">진행중</Select.Option>
               <Select.Option value="DONE">완료</Select.Option>
@@ -162,13 +162,13 @@ const WorkOrdersPage = () => {
             </Select>
           </Form.Item>
           <Form.Item name="dueRange" label="납기">
-            <DatePicker.RangePicker allowClear />
+            <DatePicker.RangePicker allowClear data-testid="work-due-range" />
           </Form.Item>
           <div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end', gap: 8 }}>
-            <Button type="primary" htmlType="submit" style={{ minWidth: 96, height: 32 }}>
+            <Button type="primary" htmlType="submit" style={{ minWidth: 96, height: 32 }} data-testid="work-search-btn">
               검색
             </Button>
-            <Button onClick={() => fetchList(search)} style={{ minWidth: 96, height: 32 }}>
+            <Button onClick={() => fetchList(search)} style={{ minWidth: 96, height: 32 }} data-testid="work-refresh-btn">
               새로고침
             </Button>
             <Button
@@ -179,6 +179,7 @@ const WorkOrdersPage = () => {
                 fetchList({});
               }}
               style={{ minWidth: 96, height: 32 }}
+              data-testid="work-reset-btn"
             >
               초기화
             </Button>

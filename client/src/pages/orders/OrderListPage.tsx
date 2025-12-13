@@ -198,16 +198,16 @@ const OrderListPage = () => {
         style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}
       >
         <Form.Item name="code" label="수주코드">
-          <Input allowClear placeholder="수주코드" />
+          <Input allowClear placeholder="수주코드" data-testid="orders-code-input" />
         </Form.Item>
         <Form.Item name="customerName" label="고객사">
-          <Input allowClear placeholder="고객사명" />
+          <Input allowClear placeholder="고객사명" data-testid="orders-customer-input" />
         </Form.Item>
         <Form.Item name="itemName" label="품목명">
-          <Input allowClear placeholder="품목명" />
+          <Input allowClear placeholder="품목명" data-testid="orders-item-input" />
         </Form.Item>
         <Form.Item name="status" label="상태">
-          <Select allowClear style={{ width: 150 }} placeholder="상태 선택">
+          <Select allowClear style={{ width: 150 }} placeholder="상태 선택" data-testid="orders-status-select">
             <Select.Option value="OPEN">접수</Select.Option>
             <Select.Option value="IN_PROGRESS">진행중</Select.Option>
             <Select.Option value="DONE">완료</Select.Option>
@@ -216,13 +216,13 @@ const OrderListPage = () => {
           </Select>
         </Form.Item>
         <Form.Item name="dueRange" label="납기">
-          <DatePicker.RangePicker allowClear />
+          <DatePicker.RangePicker allowClear data-testid="orders-due-range" />
         </Form.Item>
         <div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end', gap: 8 }}>
-          <Button type="primary" htmlType="submit" style={{ minWidth: 96, height: 32 }}>
+          <Button type="primary" htmlType="submit" style={{ minWidth: 96, height: 32 }} data-testid="orders-search-btn">
             검색
           </Button>
-          <Button onClick={() => fetchList()} style={{ minWidth: 96, height: 32 }}>
+          <Button onClick={() => fetchList()} style={{ minWidth: 96, height: 32 }} data-testid="orders-refresh-btn">
             새로고침
           </Button>
           <Button
@@ -233,6 +233,7 @@ const OrderListPage = () => {
               fetchList({}, { current: 1, pageSize: 10 });
             }}
             style={{ minWidth: 96, height: 32 }}
+            data-testid="orders-reset-btn"
           >
             초기화
           </Button>
@@ -242,11 +243,12 @@ const OrderListPage = () => {
       {error && <Alert style={{ marginBottom: 12 }} type="error" showIcon message={error} />}
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, gap: 8, flexWrap: 'wrap' }}>
-        <Button type="primary" onClick={() => openModal()} style={{ minWidth: 96, height: 32 }}>
+        <Button type="primary" onClick={() => openModal()} style={{ minWidth: 96, height: 32 }} data-testid="orders-add-btn">
           추가
         </Button>
         <Button
           style={{ minWidth: 96, height: 32 }}
+          data-testid="orders-edit-btn"
           onClick={() =>
             selectedRowKeys[0]
               ? openModal(data.find((d) => d.id === selectedRowKeys[0]))
@@ -255,7 +257,7 @@ const OrderListPage = () => {
         >
           수정
         </Button>
-        <Button danger onClick={handleDelete} style={{ minWidth: 96, height: 32 }}>
+        <Button danger onClick={handleDelete} style={{ minWidth: 96, height: 32 }} data-testid="orders-delete-btn">
           삭제
         </Button>
       </div>
