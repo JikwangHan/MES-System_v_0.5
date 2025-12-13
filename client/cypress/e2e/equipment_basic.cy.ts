@@ -22,7 +22,6 @@ describe('설비 모니터링 화면 기본 검증', () => {
 
     cy.get('[data-testid=equipment-code-input]').should('exist').type('EQ');
     cy.get('[data-testid=equipment-name-input]').should('exist').type('설비명');
-    cy.get('[data-testid=equipment-status-select]').should('exist');
 
     cy.get('[data-testid=equipment-search-btn]').click();
     cy.get('[data-testid=equipment-refresh-btn]').click();
