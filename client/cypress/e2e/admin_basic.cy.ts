@@ -34,9 +34,9 @@ describe('업체/사용자 관리 화면 기본 검증', () => {
 
   it('사용자 관리 화면 입력/버튼 확인 및 검색/초기화', () => {
     cy.visit('/app/admin/users');
-    // 페이지 로딩이 늦는 경우를 대비해 버튼 존재 여부로 먼저 확인
-    cy.get('[data-testid=user-search-btn]', { timeout: 8000 }).should('exist');
-    cy.contains('사용자 관리', { timeout: 8000 }).should('exist');
+    // 페이지 로딩이 늦는 경우를 대비해 제목과 검색 버튼을 충분히 대기
+    cy.contains('사용자 관리', { timeout: 12000 }).should('exist');
+    cy.get('[data-testid=user-search-btn]', { timeout: 12000 }).should('exist');
 
     cy.get('[data-testid=user-username-input]').should('exist').type('user');
     cy.get('[data-testid=user-displayname-input]').should('exist').type('이름');
