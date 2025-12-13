@@ -50,12 +50,14 @@ export const AdminOnly = ({ children, allowedRoles = ['SYSTEM_ADMIN'] }: Props) 
     };
     Modal.destroyAll();
     Modal.warning({
-      title: '접근 권한이 없습니다!',
-      content: '관리자에게 문의하세요.',
+      className: 'unauth-modal',
+      title: <span data-testid="unauth-title">접근 권한이 없습니다!</span>,
+      content: <div data-testid="unauth-content">관리자에게 문의하세요.</div>,
       okText: '확인',
       centered: true,
       maskClosable: false,
       closable: false,
+      okButtonProps: { 'data-testid': 'unauth-ok' },
       onOk: handleClose,
       onCancel: handleClose,
     });

@@ -13,12 +13,12 @@ describe('대시보드 기간 반응', () => {
   }
 
   const selectPeriod = (label: string) => {
-    cy.contains('기간').parent().within(() => {
-      cy.get('.ant-select').click();
-    });
-    cy.get('.ant-select-dropdown').within(() => {
-      cy.contains(label).click();
-    });
+    cy.get('[data-testid=dashboard-period-select]').click();
+    cy.get('.ant-select-dropdown:not(.ant-select-dropdown-hidden)')
+      .should('be.visible')
+      .within(() => {
+        cy.contains(label).click({ force: true });
+      });
   };
 
   it('오늘 → 최근7일 → 최근30일 전환 시 KPI/차트 영역 렌더 확인', () => {

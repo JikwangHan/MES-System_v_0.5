@@ -123,10 +123,18 @@ const EquipmentListPage = () => {
             style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}
           >
           <Form.Item name="code" label="설비코드">
-            <Input allowClear placeholder="설비코드" />
+            <Input
+              allowClear
+              placeholder="설비코드"
+              data-testid="equipment-code-input"
+            />
           </Form.Item>
           <Form.Item name="name" label="설비명">
-            <Input allowClear placeholder="설비명" />
+            <Input
+              allowClear
+              placeholder="설비명"
+              data-testid="equipment-name-input"
+            />
           </Form.Item>
           <Form.Item name="status" label="상태">
             <Select allowClear style={{ width: 140 }} placeholder="상태 선택">
@@ -137,8 +145,21 @@ const EquipmentListPage = () => {
             </Select>
           </Form.Item>
           <div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end', gap: 8 }}>
-            <Button type="primary" htmlType="submit" style={{ minWidth: 96, height: 32 }}>검색</Button>
-            <Button onClick={() => fetchList(search)} style={{ minWidth: 96, height: 32 }}>새로고침</Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              style={{ minWidth: 96, height: 32 }}
+              data-testid="equipment-search-btn"
+            >
+              검색
+            </Button>
+            <Button
+              onClick={() => fetchList(search)}
+              style={{ minWidth: 96, height: 32 }}
+              data-testid="equipment-refresh-btn"
+            >
+              새로고침
+            </Button>
             <Button
               onClick={() => {
                 form.resetFields();
@@ -150,6 +171,7 @@ const EquipmentListPage = () => {
                 fetchList(empty, companyCode);
               }}
               style={{ minWidth: 96, height: 32 }}
+              data-testid="equipment-reset-btn"
             >
               초기화
             </Button>

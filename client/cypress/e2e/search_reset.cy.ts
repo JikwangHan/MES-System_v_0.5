@@ -17,16 +17,16 @@ describe('검색/초기화 동작 - 설비 모니터링', () => {
     cy.apiLogin(adminId, adminPw);
     cy.visit('/app/equipment');
 
-    // 검색값 입력
-    cy.contains('설비코드').parent().find('input').type('EQ-TEST');
-    cy.contains('설비명').parent().find('input').type('테스트설비');
-    cy.contains('검색').click();
+    // 검색값 입력 (data-testid 활용)
+    cy.get('[data-testid=equipment-code-input]').type('EQ-TEST');
+    cy.get('[data-testid=equipment-name-input]').type('테스트설비');
+    cy.get('[data-testid=equipment-search-btn]').click();
 
     // 초기화
-    cy.contains('초기화').click();
+    cy.get('[data-testid=equipment-reset-btn]').click();
 
     // 입력값이 비워졌는지 확인
-    cy.contains('설비코드').parent().find('input').should('have.value', '');
-    cy.contains('설비명').parent().find('input').should('have.value', '');
+    cy.get('[data-testid=equipment-code-input]').should('have.value', '');
+    cy.get('[data-testid=equipment-name-input]').should('have.value', '');
   });
 });

@@ -17,12 +17,12 @@ describe('권한 차단 모달 - USER', () => {
     cy.apiLogin(userId, userPw);
     // 관리자 경로 직접 접근
     cy.visit('/app/admin/users');
-    // 모달 1회 표시 확인
-    cy.get('.ant-modal') // antd 모달
+    // 모달 1회 표시 확인 (data-testid 기반)
+    cy.get('.unauth-modal')
       .should('have.length', 1)
       .within(() => {
-        cy.contains('접근 권한이 없습니다').should('exist');
-        cy.contains('확인').click();
+        cy.get('[data-testid=unauth-title]').contains('접근 권한이 없습니다').should('exist');
+        cy.get('[data-testid=unauth-ok]').click();
       });
     // 홈으로 이동 확인
     cy.url().should('eq', 'http://localhost:5173/');

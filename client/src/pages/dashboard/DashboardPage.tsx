@@ -61,7 +61,12 @@ const DashboardPage = () => {
       <Card size="small" style={{ width: '100%' }}>
         <Space>
           <Typography.Text>기간</Typography.Text>
-          <Select value={period} onChange={(v) => setPeriod(v)} style={{ width: 140 }}>
+          <Select
+            value={period}
+            onChange={(v) => setPeriod(v)}
+            style={{ width: 140 }}
+            data-testid="dashboard-period-select"
+          >
             <Select.Option value="today">오늘</Select.Option>
             <Select.Option value="week">최근 7일</Select.Option>
             <Select.Option value="month">최근 30일</Select.Option>
