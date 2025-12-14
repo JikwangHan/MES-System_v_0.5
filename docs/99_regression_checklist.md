@@ -32,3 +32,7 @@
 ## 6. 빌드/상태
 - `npm run build` (server, client) 성공 여부 확인.
 - `git status` 확인 → 문제 없으면 커밋/푸시로 상태 동결.
+
+## 7. 최근 실행 기록(예시)
+- 2025-12-XX `npm run cy:run` : 14/14 스펙 PASS (admin/auth/CRUD/테넌트/토큰 포함 전체 스모크).
+- 실행 로그는 콘솔 출력 또는 `cypress/screenshots` 경로와 함께 날짜별로 남겨 추후 회귀 비교용으로 활용.
