@@ -26,6 +26,17 @@
 - 서버: 인증 및 인가, API, 비즈니스 로직, 배치 및 스케줄러, 데이터 계층
 - 운영 및 보안: 테넌트 분리, 키 관리, 백업 및 복구, 감사 및 원시 로그, 모니터링 및 경보
 
+### 1.2 E2E 자동화 현황(요약)
+
+- 기본 커버리지: auth_block, dashboard 기간 전환, 설비 검색/초기화, 관리자 화면 스모크, 권한별 접근 차단/허용, 토큰 오염/만료 리다이렉트, 테넌트 선택 UI 존재, CRUD 버튼/모달 존재 확인(파괴적 액션 없이 “존재/표시 확인” 수준).
+- 미포함/주의: 실제 CRUD 저장, 파일 업로드, 대규모 데이터 시나리오, 외부 연동(시뮬레이터/장비 실시간)과 DR/백업 복구는 별도 수동 시나리오 필요.
+- 실행 방법
+  - PowerShell에서 env 설정(예시):  
+    `$env:CYPRESS_USER_ID="oper2"; $env:CYPRESS_USER_PW="oper2222"; $env:CYPRESS_COMPANY_ADMIN_ID="oper1"; $env:CYPRESS_COMPANY_ADMIN_PW="oper1111"; $env:CYPRESS_ADMIN_ID="admin"; $env:CYPRESS_ADMIN_PW="admin123"`
+  - 전체 스펙 실행: `npm run cy:run` (client 디렉터리)
+  - GUI 모드: `npm run cy:open` 후 E2E 선택 → 스펙 실행
+- 실패 시 확인 포인트: 페이지 전환(redirect) 여부로 인해 URL 매칭 실패 가능 → 테스트 대기시간/셀렉터 점검. 캐시된 토큰/컴퍼니 코드가 예상과 다르면 초기화 후 재시도.
+
 ---
 
 ## 2. 우선순위 레벨 정의
