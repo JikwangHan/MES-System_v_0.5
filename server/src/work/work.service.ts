@@ -1,10 +1,9 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { WorkOrder } from '../entities/work-order.entity';
 import { WorkOperation } from '../entities/work-operation.entity';
 import { ProductionResult } from '../entities/production-result.entity';
-import { Company } from '../entities/company.entity';
 import { CreateWorkOrderDto } from './dto/create-work-order.dto';
 
 @Injectable()
@@ -16,42 +15,19 @@ export class WorkService {
     private readonly opRepo: Repository<WorkOperation>,
     @InjectRepository(ProductionResult)
     private readonly resultRepo: Repository<ProductionResult>,
-    @InjectRepository(Company)
-    private readonly companyRepo: Repository<Company>,
   ) {}
 
-  private async getCompanyForUser(user: any, dtoCompanyCode?: string): Promise<Company> {
-    if (user.role === 'SYSTEM_ADMIN') {
-      if (dtoCompanyCode) {
-        const company = await this.companyRepo.findOne({ where: { code: dtoCompanyCode } });
-        if (!company) throw new NotFoundException('업체를 찾을 수 없습니다.');
-        return company;
-      }
-      if (!user.companyId) throw new ForbiddenException('업체 정보를 찾을 수 없습니다.');
-      const company = await this.companyRepo.findOne({ where: { id: user.companyId } });
-      if (!company) throw new NotFoundException('업체를 찾을 수 없습니다.');
-      return company;
-    }
-    if (!user.companyId) throw new ForbiddenException('업체 정보가 없습니다.');
-    const company = await this.companyRepo.findOne({ where: { id: user.companyId } });
-    if (!company) throw new NotFoundException('업체를 찾을 수 없습니다.');
-    return company;
+  private ensureTenantId(user: any, reqTenantId?: string): number {
+    const tenantId = reqTenantId ?? (user?.companyId != null ? String(user.companyId) : undefined);
+    if (!tenantId) throw new BadRequestException('TenantId is required.');
+    return Number(tenantId);
   }
 
-  async findAll(user: any, filters: any): Promise<{ items: WorkOrder[]; total: number }> {
-    const qb = this.workRepo
-      .createQueryBuilder('wo')
-      .leftJoinAndSelect('wo.company', 'company');
+  async findAll(user: any, filters: any, reqTenantId?: string): Promise<{ items: WorkOrder[]; total: number }> {
+    const tenantId = this.ensureTenantId(user, reqTenantId);
+    const qb = this.workRepo.createQueryBuilder('wo');
 
-    // SYSTEM_ADMIN은 업체 선택값이 ALL이면 모든 업체, 특정 코드면 해당 업체만 조회
-    if (user.role === 'SYSTEM_ADMIN') {
-      if (filters?.companyCode && filters.companyCode !== 'ALL') {
-        qb.where('company.code = :cc', { cc: filters.companyCode });
-      }
-    } else {
-      const company = await this.getCompanyForUser(user);
-      qb.where('wo.companyId = :cid', { cid: company.id });
-    }
+    qb.where('wo.tenantId = :tid', { tid: tenantId });
 
     if (filters.status) qb.andWhere('wo.status = :status', { status: filters.status });
     if (filters.code) qb.andWhere('wo.code LIKE :code', { code: `%${filters.code}%` });
@@ -70,9 +46,9 @@ export class WorkService {
     return { items, total };
   }
 
-  async create(user: any, dto: CreateWorkOrderDto): Promise<WorkOrder> {
-    const company = await this.getCompanyForUser(user, dto.companyCode);
-    const exists = await this.workRepo.findOne({ where: { code: dto.code, company: { id: company.id } } });
+  async create(user: any, dto: CreateWorkOrderDto, reqTenantId?: string): Promise<WorkOrder> {
+    const tenantId = this.ensureTenantId(user, reqTenantId);
+    const exists = await this.workRepo.findOne({ where: { code: dto.code, tenantId } });
     if (exists) throw new ForbiddenException('동일한 코드의 작업지시가 이미 존재합니다.');
     const wo = this.workRepo.create({
       code: dto.code,
@@ -82,23 +58,23 @@ export class WorkService {
       dueDate: dto.dueDate,
       status: dto.status || 'PLANNED',
       description: dto.description,
-      company,
+      tenantId,
     });
     return this.workRepo.save(wo);
   }
 
-  async findOperations(user: any, workOrderId: number): Promise<WorkOperation[]> {
-    const company = await this.getCompanyForUser(user);
+  async findOperations(user: any, workOrderId: number, reqTenantId?: string): Promise<WorkOperation[]> {
+    const tenantId = this.ensureTenantId(user, reqTenantId);
     return this.opRepo.find({
-      where: { workOrder: { id: workOrderId }, company: { id: company.id } },
+      where: { workOrder: { id: workOrderId }, tenantId },
       order: { seq: 'ASC' },
     });
   }
 
-  async findResults(user: any, workOrderId: number): Promise<ProductionResult[]> {
-    const company = await this.getCompanyForUser(user);
+  async findResults(user: any, workOrderId: number, reqTenantId?: string): Promise<ProductionResult[]> {
+    const tenantId = this.ensureTenantId(user, reqTenantId);
     return this.resultRepo.find({
-      where: { workOrder: { id: workOrderId }, company: { id: company.id } },
+      where: { workOrder: { id: workOrderId }, tenantId },
       order: { recordedAt: 'DESC' },
     });
   }

@@ -16,6 +16,9 @@ export class Equipment {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ type: 'int', index: true })
+  tenantId: number;
+
   @Column({ length: 50 })
   code: string; // 업체 내 설비 코드 (UNIQUE with company)
 
@@ -34,8 +37,8 @@ export class Equipment {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @ManyToOne(() => Company, (company) => company.id, { eager: true })
-  company: Company;
+  @ManyToOne(() => Company, (company) => company.id, { eager: true, nullable: true })
+  company?: Company;
 
   @OneToMany(() => EquipmentEvent, (event) => event.equipment)
   events: EquipmentEvent[];

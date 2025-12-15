@@ -36,6 +36,10 @@ export class Order {
   @Column({ length: 30, default: 'OPEN' })
   status: string;
 
+  // 멀티테넌트 강제: 요청 스코프의 tenantId로 자동 필터/주입
+  @Column({ type: 'int', index: true })
+  tenantId: number;
+
   @ManyToOne(() => Company, (c) => c.id, { nullable: true })
   company?: Company;
 

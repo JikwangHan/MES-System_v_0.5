@@ -1,8 +1,7 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Inventory } from '../entities/inventory.entity';
-import { Company } from '../entities/company.entity';
 import { ListInventoryDto } from './dto/list-inventory.dto';
 
 @Injectable()
@@ -10,58 +9,19 @@ export class InventoryService {
   constructor(
     @InjectRepository(Inventory)
     private readonly inventoryRepo: Repository<Inventory>,
-    @InjectRepository(Company)
-    private readonly companyRepo: Repository<Company>,
   ) {}
 
-  private async getCompanyForUser(user: any, companyCode?: string): Promise<Company | null> {
-    if (user.role === 'SYSTEM_ADMIN') {
-      if (companyCode && companyCode !== 'ALL') {
-        const company = await this.companyRepo.findOne({ where: { code: companyCode } });
-        if (!company) throw new NotFoundException('업체를 찾을 수 없습니다.');
-        return company;
-      }
-      return null;
-    }
-    if (!user.companyId) throw new ForbiddenException('업체 정보가 없습니다.');
-    const company = await this.companyRepo.findOne({ where: { id: user.companyId } });
-    if (!company) throw new NotFoundException('업체를 찾을 수 없습니다.');
-    return company;
+  private ensureTenantId(user: any, reqTenantId?: string): number {
+    const tenantId = reqTenantId ?? (user?.companyId != null ? String(user.companyId) : undefined);
+    if (!tenantId) throw new BadRequestException('TenantId is required.');
+    return Number(tenantId);
   }
 
-  private async seedIfEmpty(): Promise<void> {
-    const count = await this.inventoryRepo.count();
-    if (count > 0) return;
-    const companies = await this.companyRepo.find();
-    const targets = companies.length > 0 ? companies : [await this.companyRepo.save(this.companyRepo.create({ code: 'DEFAULT', name: '위드윈' }))];
-    for (const company of targets) {
-      for (let i = 0; i < 8; i += 1) {
-        const idx = i + 1;
-        const inv = this.inventoryRepo.create({
-          itemCode: `ITEM-${idx}`,
-          itemName: `제품-${idx}`,
-          warehouse: idx % 2 === 0 ? '본사창고' : '2공장',
-          location: `LOC-${idx}`,
-          qty: 500 - idx * 20,
-          safetyQty: 200,
-          status: idx % 3 === 0 ? 'LOW' : 'AVAILABLE',
-          company,
-        });
-        await this.inventoryRepo.save(inv);
-      }
-    }
-  }
+  async findAll(user: any, filters: ListInventoryDto, reqTenantId?: string): Promise<{ items: Inventory[]; total: number }> {
+    const tenantId = this.ensureTenantId(user, reqTenantId);
+    const qb = this.inventoryRepo.createQueryBuilder('inv');
 
-  async findAll(user: any, filters: ListInventoryDto): Promise<{ items: Inventory[]; total: number }> {
-    await this.seedIfEmpty();
-    const qb = this.inventoryRepo.createQueryBuilder('inv').leftJoinAndSelect('inv.company', 'company');
-
-    const company = await this.getCompanyForUser(user, filters.companyCode);
-    if (company) {
-      qb.where('inv.companyId = :cid', { cid: company.id });
-    } else if (filters.companyCode && filters.companyCode !== 'ALL') {
-      qb.where('company.code = :cc', { cc: filters.companyCode });
-    }
+    qb.where('inv.tenantId = :tid', { tid: tenantId });
 
     if (filters.itemCode) qb.andWhere('inv.itemCode LIKE :code', { code: `%${filters.itemCode}%` });
     if (filters.itemName) qb.andWhere('inv.itemName LIKE :name', { name: `%${filters.itemName}%` });
@@ -74,8 +34,8 @@ export class InventoryService {
     return { items, total };
   }
 
-  async create(user: any, dto: Partial<Inventory> & { companyCode?: string }) {
-    const company = await this.getCompanyForUser(user, dto.companyCode);
+  async create(user: any, dto: Partial<Inventory>, reqTenantId?: string) {
+    const tenantId = this.ensureTenantId(user, reqTenantId);
     const inv = this.inventoryRepo.create({
       itemCode: dto.itemCode!,
       itemName: dto.itemName!,
@@ -84,18 +44,15 @@ export class InventoryService {
       qty: dto.qty ?? 0,
       safetyQty: dto.safetyQty ?? 0,
       status: dto.status || 'AVAILABLE',
-      company: company || undefined,
+      tenantId,
     });
     return this.inventoryRepo.save(inv);
   }
 
-  async update(user: any, id: number, dto: Partial<Inventory> & { companyCode?: string }) {
-    const target = await this.inventoryRepo.findOne({ where: { id }, relations: ['company'] });
+  async update(user: any, id: number, dto: Partial<Inventory>, reqTenantId?: string) {
+    const tenantId = this.ensureTenantId(user, reqTenantId);
+    const target = await this.inventoryRepo.findOne({ where: { id, tenantId } });
     if (!target) throw new NotFoundException('재고를 찾을 수 없습니다.');
-    if (user.role !== 'SYSTEM_ADMIN') {
-      const c = await this.getCompanyForUser(user);
-      if (!target.company || target.company.id !== c!.id) throw new ForbiddenException('다른 업체 재고는 수정할 수 없습니다.');
-    }
     Object.assign(target, {
       itemCode: dto.itemCode ?? target.itemCode,
       itemName: dto.itemName ?? target.itemName,
@@ -108,13 +65,10 @@ export class InventoryService {
     return this.inventoryRepo.save(target);
   }
 
-  async remove(user: any, id: number) {
-    const target = await this.inventoryRepo.findOne({ where: { id }, relations: ['company'] });
+  async remove(user: any, id: number, reqTenantId?: string) {
+    const tenantId = this.ensureTenantId(user, reqTenantId);
+    const target = await this.inventoryRepo.findOne({ where: { id, tenantId } });
     if (!target) throw new NotFoundException('재고를 찾을 수 없습니다.');
-    if (user.role !== 'SYSTEM_ADMIN') {
-      const c = await this.getCompanyForUser(user);
-      if (!target.company || target.company.id !== c!.id) throw new ForbiddenException('다른 업체 재고는 삭제할 수 없습니다.');
-    }
     await this.inventoryRepo.delete(id);
     return { success: true };
   }

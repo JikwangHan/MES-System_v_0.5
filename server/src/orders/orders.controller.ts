@@ -14,24 +14,24 @@ export class OrdersController {
   @Get()
   @Roles('SYSTEM_ADMIN', 'COMPANY_ADMIN', 'USER')
   async list(@Req() req: any, @Query() query: ListOrdersDto) {
-    return this.ordersService.findAll(req.user, query);
+    return this.ordersService.findAll(req.user, query, req.tenantId);
   }
 
   @Post()
   @Roles('SYSTEM_ADMIN', 'COMPANY_ADMIN')
   async create(@Req() req: any, @Body() body: any) {
-    return this.ordersService.create(req.user, body);
+    return this.ordersService.create(req.user, body, req.tenantId);
   }
 
   @Patch(':id')
   @Roles('SYSTEM_ADMIN', 'COMPANY_ADMIN')
   async update(@Req() req: any, @Param('id', ParseIntPipe) id: number, @Body() body: any) {
-    return this.ordersService.update(req.user, id, body);
+    return this.ordersService.update(req.user, id, body, req.tenantId);
   }
 
   @Delete(':id')
   @Roles('SYSTEM_ADMIN', 'COMPANY_ADMIN')
   async remove(@Req() req: any, @Param('id', ParseIntPipe) id: number) {
-    return this.ordersService.remove(req.user, id);
+    return this.ordersService.remove(req.user, id, req.tenantId);
   }
 }

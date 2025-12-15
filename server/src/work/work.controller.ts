@@ -14,27 +14,27 @@ export class WorkController {
   @Get('orders')
   @Roles('SYSTEM_ADMIN', 'COMPANY_ADMIN', 'USER')
   async listOrders(@Req() req: any, @Query() query: any) {
-    return this.workService.findAll(req.user, query);
+    return this.workService.findAll(req.user, query, req.tenantId);
   }
 
   // 작업지시 생성: 관리자/운영자
   @Post('orders')
   @Roles('SYSTEM_ADMIN', 'COMPANY_ADMIN')
   async createOrder(@Req() req: any, @Body() dto: CreateWorkOrderDto) {
-    return this.workService.create(req.user, dto);
+    return this.workService.create(req.user, dto, req.tenantId);
   }
 
   // 공정 목록 조회
   @Get('orders/:id/operations')
   @Roles('SYSTEM_ADMIN', 'COMPANY_ADMIN', 'USER')
   async listOperations(@Req() req: any, @Param('id', ParseIntPipe) id: number) {
-    return this.workService.findOperations(req.user, id);
+    return this.workService.findOperations(req.user, id, req.tenantId);
   }
 
   // 실적 목록 조회
   @Get('orders/:id/results')
   @Roles('SYSTEM_ADMIN', 'COMPANY_ADMIN', 'USER')
   async listResults(@Req() req: any, @Param('id', ParseIntPipe) id: number) {
-    return this.workService.findResults(req.user, id);
+    return this.workService.findResults(req.user, id, req.tenantId);
   }
 }

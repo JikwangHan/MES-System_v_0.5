@@ -14,27 +14,27 @@ export class EquipmentController {
   @Get()
   @Roles('SYSTEM_ADMIN', 'COMPANY_ADMIN', 'USER')
   async list(@Req() req: any, @Query() query: any) {
-    return this.equipmentService.findAll(req.user, query);
+    return this.equipmentService.findAll(req.user, query, req.tenantId);
   }
 
   // 설비 생성: SYSTEM_ADMIN/COMPANY_ADMIN만
   @Post()
   @Roles('SYSTEM_ADMIN', 'COMPANY_ADMIN')
   async create(@Req() req: any, @Body() dto: CreateEquipmentDto) {
-    return this.equipmentService.create(req.user, dto);
+    return this.equipmentService.create(req.user, dto, req.tenantId);
   }
 
   // 설비 이벤트 조회: 읽기 전용
   @Get(':id/events')
   @Roles('SYSTEM_ADMIN', 'COMPANY_ADMIN', 'USER')
   async events(@Req() req: any, @Param('id', ParseIntPipe) id: number) {
-    return this.equipmentService.findEvents(req.user, id);
+    return this.equipmentService.findEvents(req.user, id, req.tenantId);
   }
 
   // 설비 센서 데이터 조회: 읽기 전용
   @Get(':id/sensors')
   @Roles('SYSTEM_ADMIN', 'COMPANY_ADMIN', 'USER')
   async sensors(@Req() req: any, @Param('id', ParseIntPipe) id: number) {
-    return this.equipmentService.findSensors(req.user, id);
+    return this.equipmentService.findSensors(req.user, id, req.tenantId);
   }
 }

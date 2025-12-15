@@ -16,8 +16,13 @@ export class WorkOrder {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Company, (company) => company.id, { eager: true })
-  company: Company;
+  // 테넌트 격리: 필수 tenantId 컬럼
+  @Column({ type: 'int', index: true })
+  tenantId: number;
+
+  // 회사 참조는 선택(추후 임퍼소네이션/표시용)
+  @ManyToOne(() => Company, (company) => company.id, { eager: true, nullable: true })
+  company?: Company;
 
   @Column({ length: 50 })
   code: string; // 업체 내 유니크

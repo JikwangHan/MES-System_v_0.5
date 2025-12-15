@@ -15,11 +15,14 @@ export class WorkOperation {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Company, (company) => company.id, { eager: true })
-  company: Company;
+  @Column({ type: 'int', index: true })
+  tenantId: number;
 
-  @ManyToOne(() => WorkOrder, (wo) => wo.operations, { eager: true })
-  workOrder: WorkOrder;
+  @ManyToOne(() => Company, (company) => company.id, { eager: true, nullable: true })
+  company?: Company;
+
+  @ManyToOne(() => WorkOrder, (wo) => wo.operations, { eager: true, nullable: true })
+  workOrder?: WorkOrder;
 
   @ManyToOne(() => Equipment, (eq) => eq.id, { nullable: true, eager: true })
   equipment?: Equipment;

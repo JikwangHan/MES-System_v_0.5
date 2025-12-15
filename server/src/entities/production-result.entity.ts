@@ -15,8 +15,11 @@ export class ProductionResult {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Company, (company) => company.id, { eager: true })
-  company: Company;
+  @Column({ type: 'int', index: true })
+  tenantId: number;
+
+  @ManyToOne(() => Company, (company) => company.id, { eager: true, nullable: true })
+  company?: Company;
 
   @ManyToOne(() => WorkOrder, (wo) => wo.results, { eager: true })
   workOrder: WorkOrder;

@@ -13,6 +13,9 @@ export class Inventory {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ type: 'int', index: true })
+  tenantId: number;
+
   @Column({ length: 50 })
   itemCode: string;
 
