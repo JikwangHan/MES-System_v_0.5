@@ -1,4 +1,4 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, OnModuleInit } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
@@ -23,6 +23,7 @@ import { Order } from './entities/order.entity';
 import { Inventory } from './entities/inventory.entity';
 import { InventoryModule } from './inventory/inventory.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { TenantMiddleware } from './common/tenant.middleware';
 
 @Module({
   // imports 배열에 앱에서 사용할 전역 모듈을 등록합니다.
@@ -75,10 +76,14 @@ import { DashboardModule } from './dashboard/dashboard.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule implements OnModuleInit {
+export class AppModule implements OnModuleInit, NestModule {
   constructor(private readonly usersService: UsersService) {}
 
   async onModuleInit() {
     await this.usersService.ensureDefaultAdmin();
+  }
+
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(TenantMiddleware).forRoutes('*');
   }
 }
