@@ -1,0 +1,30 @@
+# Node / TypeScript / Vite / NestJS common ignores
+node_modules/
+dist/
+build/
+coverage/
+.tmp/
+.temp/
+
+# Env / credentials
+.env
+.env.*
+*.env
+*.env.*
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor/OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Other
+*.pid
+*.seed
+*.sqlite
